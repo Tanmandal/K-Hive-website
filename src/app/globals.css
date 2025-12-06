@@ -24,3 +24,84 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+/* Smooth fade + slide */
+@keyframes fadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Soft floating hover effect */
+@keyframes floatSmooth {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-6px); }
+  100% { transform: translateY(0px); }
+}
+
+/* Liquid shimmer overlay */
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(200%); }
+}
+
+/* Elastic press effect */
+@keyframes popElastic {
+  0%   { transform: scale(1); }
+  50%  { transform: scale(0.9); }
+  80%  { transform: scale(1.05); }
+  100% { transform: scale(1); }
+}
+
+/* Upvote flame pulse */
+@keyframes flamePulse {
+  0% { transform: scale(1); filter: drop-shadow(0 0 0px #ff4500); }
+  50% { transform: scale(1.25); filter: drop-shadow(0 0 6px #ff4500); }
+  100% { transform: scale(1); filter: drop-shadow(0 0 0px #ff4500); }
+}
+
+/* Image slow zoom */
+@keyframes slowZoom {
+  from { transform: scale(1); }
+  to { transform: scale(1.07); }
+}
+/* Hide scrollbar for Chrome, Safari, Edge */
+/* Hide scrollbar everywhere (Chrome, Safari, Edge) */
+::-webkit-scrollbar {
+  width: 0px;
+  height: 0px;
+}
+
+/* Hide scrollbar in Firefox */
+* {
+  scrollbar-width: none;
+}
+
+/* Optional: Prevent accidental horizontal scroll */
+html, body {
+  overflow-x: hidden;
+}
+/* Smooth scrolling everywhere */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Smooth transitions for UI elements */
+body {
+  animation: fadeGlobal 0.6s ease-out;
+}
+
+@keyframes fadeGlobal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
