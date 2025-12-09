@@ -55,13 +55,13 @@ export const postsApi = {
 
   // Upvote post
   upvotePost: async (postId) => {
-    const { data } = await apiClient.post(`/post/${postId}/upvote`);
+    const { data } = await apiClient.patch(`/post/upvote/${postId}`);
     return data;
   },
 
   // Downvote post
   downvotePost: async (postId) => {
-    const { data } = await apiClient.post(`/post/${postId}/downvote`);
+    const { data } = await apiClient.patch(`/post/downvote/${postId}`);
     return data;
   },
 };

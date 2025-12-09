@@ -147,8 +147,8 @@ export default function RedditNavbar() {
               className="flex items-center gap-2 sm:gap-3 flex-shrink-0 cursor-pointer"
               onClick={() => router.push("/")}
             >
-              <div className="bg-[#37ff0074] rounded-full w-10 h-10 sm:w-14 sm:h-14 lg:w-16 lg:h-16 flex items-center justify-center">
-                <span className="text-white font-bold text-xl sm:text-2xl lg:text-3xl">
+              <div className="bg-[#37ff0074] rounded-full w-5 h-5 sm:w-8 sm:h-8 lg:w-10 lg:h-10 flex items-center justify-center">
+                <span className="text-white font-bold text-lg sm:text-xl lg:text-2xl">
                   K
                 </span>
               </div>

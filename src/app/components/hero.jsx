@@ -44,6 +44,8 @@ export default function RedditFeed() {
     limit: 10,
   });
 
+  console.log(postsData);
+
   const { mutate: votePost } = useVotePost();
 
   const handleVote = (postId, voteType) => {
@@ -207,7 +209,7 @@ export default function RedditFeed() {
                       {/* Left side - Text content (60% on desktop) */}
                       <div className="flex-1 md:w-[60%] min-w-0">
                         {/* Title */}
-                        <h2 className="text-white text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight mb-1.5 sm:mb-2 cursor-pointer transition-colors duration-300 line-clamp-2 sm:line-clamp-3 md:line-clamp-none break-words">
+                        <h2 onClick={() => router.push(`/post/${post.postId}`)} className="text-white text-sm sm:text-base md:text-lg lg:text-xl font-bold tracking-tight mb-1.5 sm:mb-2 cursor-pointer transition-colors duration-300 line-clamp-2 sm:line-clamp-3 md:line-clamp-none break-words">
                           {post.title}
                         </h2>
 
