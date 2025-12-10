@@ -4,6 +4,7 @@ import "./globals.css";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { ToastProvider } from "@/components/Toast";
 import RedditNavbar from "./components/Navbar";
+import ScrollToTop from "@/components/scrollToTop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({ children }) {
         <QueryProvider>
           <ToastProvider>
             <RedditNavbar />
+            <ScrollToTop />
             {children}
           </ToastProvider>
         </QueryProvider>

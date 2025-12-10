@@ -11,39 +11,12 @@ export const commentsApi = {
     return data;
   },
 
-  // Get single comment by ID
-  getCommentById: async (commentId) => {
-    const { data } = await apiClient.get(`/comment/${commentId}`);
-    return data;
-  },
-
-  // Get comments by user ID
-  getCommentsByUserId: async (userId, params = {}) => {
-    const { page = 1, limit = 20 } = params;
-    const { data } = await apiClient.get(`/comment/user/${userId}`, {
-      params: { page, limit },
-    });
-    return data;
-  },
-
-  // Get replies to a comment
+  // Get replies by comment ID
   getRepliesByCommentId: async (commentId, params = {}) => {
     const { page = 1, limit = 10 } = params;
     const { data } = await apiClient.get(`/comment/${commentId}/replies`, {
       params: { page, limit },
     });
-    return data;
-  },
-
-  // Get comment count for a post
-  getCommentCount: async (postId) => {
-    const { data } = await apiClient.get(`/comment/post/${postId}/count`);
-    return data;
-  },
-
-  // Get reply count for a comment
-  getReplyCount: async (commentId) => {
-    const { data } = await apiClient.get(`/comment/${commentId}/replycount`);
     return data;
   },
 
@@ -59,21 +32,33 @@ export const commentsApi = {
     return data;
   },
 
-  // Soft delete comment
-  softDeleteComment: async (commentId) => {
+  // Delete comment (soft delete)
+  deleteComment: async (commentId) => {
     const { data } = await apiClient.delete(`/comment/${commentId}`);
     return data;
   },
 
   // Upvote comment
   upvoteComment: async (commentId) => {
-    const { data } = await apiClient.post(`/comment/${commentId}/upvote`);
+    const { data } = await apiClient.patch(`/comment/upvote/${commentId}`);
     return data;
   },
 
   // Downvote comment
   downvoteComment: async (commentId) => {
-    const { data } = await apiClient.post(`/comment/${commentId}/downvote`);
+    const { data } = await apiClient.patch(`/comment/downvote/${commentId}`);
+    return data;
+  },
+
+  // Get comment count
+  getCommentCount: async (postId) => {
+    const { data } = await apiClient.get(`/comment/count/${postId}`);
+    return data;
+  },
+
+  // Get reply count
+  getReplyCount: async (commentId) => {
+    const { data } = await apiClient.get(`/comment/${commentId}/reply-count`);
     return data;
   },
 };

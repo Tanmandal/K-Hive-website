@@ -57,26 +57,7 @@ export default function PostPage() {
   };
 
   // Get user's current vote state (-1, 0, 1)
-  // Backend returns 'vote' field after populateVoteData
   const userVote = post?.vote || 0;
-
-  const handleCommentSubmit = async (text, parentId) => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    console.log("Comment submitted:", text, "Parent ID:", parentId);
-    // TODO: Add your comment API call here
-  };
-
-  const handleCommentVote = (commentId, voteType) => {
-    if (!user) {
-      router.push('/login');
-      return;
-    }
-    console.log("Comment vote:", commentId, voteType);
-    // TODO: Add your comment vote API call here
-  };
 
   const handleShare = () => {
     navigator.clipboard.writeText(window.location.href);
@@ -139,12 +120,10 @@ export default function PostPage() {
           {/* User Info Header */}
           <div className="flex items-center gap-3 mb-4">
             <img
-              src={post.user?.avatarLink || '/default-avatar.png'}
+              src={post.user?.avatarLink}
               alt={post.user?.name || 'User'}
+              referrerPolicy="no-referrer"
               className="w-10 h-10 rounded-full object-cover border-2 border-[#1a2836]"
-              onError={(e) => {
-                e.target.src = '/default-avatar.png';
-              }}
             />
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
@@ -182,7 +161,7 @@ export default function PostPage() {
               {post.tags.map((tag, index) => (
                 <span
                   key={index}
-                  className="px-3 py-1 bg-[#1a2836] text-[#ff4500] text-sm font-medium rounded-full hover:bg-[#243647] transition-colors cursor-pointer"
+                  className="px-3 py-1 bg-[#1a2836] text-[#1dddf2] text-sm font-medium rounded-full hover:bg-[#243647] transition-colors cursor-pointer"
                 >
                   #{tag}
                 </span>
@@ -195,7 +174,7 @@ export default function PostPage() {
             {post.content}
           </p>
 
-          {/* Media - Moved to bottom */}
+          {/* Media */}
           {post.media && post.media.length > 0 && (
             <div className="relative mb-6 overflow-hidden rounded-xl">
               <div
@@ -223,7 +202,7 @@ export default function PostPage() {
             </div>
           )}
 
-          {/* Action Bar - Moved to bottom */}
+          {/* Action Bar */}
           <div className="flex items-center justify-between pt-4 border-t border-[#1a2836]">
             {/* Left side - Votes and Comments */}
             <div className="flex items-center gap-2">
@@ -234,8 +213,8 @@ export default function PostPage() {
                   onClick={() => handleVote("upvote")}
                   className={`flex items-center gap-1 px-3 py-1.5 rounded-full transition-all duration-200 hover:scale-105 active:scale-95 ${
                     userVote === 1 
-                      ? 'bg-[#ff4500] text-white' 
-                      : 'bg-[#1a2836] text-gray-400 hover:bg-[#243647] hover:text-[#ff4500]'
+                      ? 'bg-[#1dddf2] text-white' 
+                      : 'bg-[#1a2836] text-gray-400 hover:bg-[#243647] hover:text-[#1dddf2]'
                   }`}
                   title={userVote === 1 ? "Remove upvote" : "Upvote"}
                 >
@@ -296,10 +275,9 @@ export default function PostPage() {
         {/* Comments Section */}
         <div className="mt-6">
           <CommentsSection
-            comments={post.comments || []}
-            onCommentSubmit={handleCommentSubmit}
-            onVote={handleCommentVote}
+            postId={post.postId}
             router={router}
+            user={user}
           />
         </div>
       </div>

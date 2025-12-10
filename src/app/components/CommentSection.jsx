@@ -2,12 +2,17 @@
 
 import { useState } from "react";
 import {
-  ArrowUp,
-  ArrowDown,
-  PlusCircle,
-  MinusCircle,
   Reply,
+  RefreshCw,
+  Loader2,
+  ChevronDown,
+  ChevronUp,
+  Edit2,
+  Trash2,
+  X,
+  Check,
 } from "lucide-react";
+import { useComments, useReplies, useCreateComment, useUpdateComment, useDeleteComment } from "@/lib/hooks/useComments";
 
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -23,29 +28,9 @@ const formatTimeAgo = (dateString) => {
   return `${days}d ago`;
 };
 
-function buildTree(flat = []) {
-  const map = new Map();
-  flat.forEach((c) => map.set(c.id, { ...c, children: [] }));
-  const roots = [];
-  for (const c of map.values()) {
-    if (c.parentId == null) roots.push(c);
-    else {
-      const parent = map.get(c.parentId);
-      if (parent) parent.children.push(c);
-      else roots.push(c);
-    }
-  }
-  const sortRec = (arr) => {
-    arr.sort((a, b) => (b.votes || 0) - (a.votes || 0));
-    arr.forEach((x) => sortRec(x.children));
-  };
-  sortRec(roots);
-  return roots;
-}
-
-function InlineReply({ parentId = null, onCancel, onSubmit }) {
+function InlineReply({ parentId = null, onCancel, onSubmit, postId }) {
   const [text, setText] = useState("");
-  const [submitting, setSubmitting] = useState(false);
+  const { mutate: createComment, isPending } = useCreateComment();
 
   const handleCancel = () => {
     setText("");
@@ -54,11 +39,24 @@ function InlineReply({ parentId = null, onCancel, onSubmit }) {
 
   const handleSubmit = async () => {
     if (!text.trim()) return;
-    setSubmitting(true);
-    await onSubmit?.(text, parentId);
-    setText("");
-    setSubmitting(false);
-    onCancel?.();
+    
+    createComment(
+      {
+        postId,
+        content: text.trim(),
+        parentCommentId: parentId,
+      },
+      {
+        onSuccess: () => {
+          setText("");
+          onSubmit?.();
+        },
+        onError: (error) => {
+          console.error("Failed to create comment:", error);
+          alert(error.response?.data?.message || "Failed to post comment");
+        },
+      }
+    );
   };
 
   return (
@@ -67,169 +65,362 @@ function InlineReply({ parentId = null, onCancel, onSubmit }) {
         value={text}
         onChange={(e) => setText(e.target.value)}
         rows={3}
-        className="w-full bg-[#020d17] border border-[#1a2836] rounded-lg p-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-[#ff4500] focus:ring-1 focus:ring-[#ff4500] transition-all resize-none"
-        placeholder="What are your thoughts?"
+        className="w-full bg-[#020d17] border border-[#1a2836] rounded-lg p-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-[#1dddf2] focus:ring-1 focus:ring-[#1dddf2] transition-all resize-none"
+        placeholder={parentId ? "Write your reply..." : "What are your thoughts?"}
+        maxLength={1000}
       />
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 items-center">
         <button
           onClick={handleSubmit}
-          className="px-4 py-1.5 rounded-full bg-[#ff4500] hover:bg-[#ff5722] text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95"
-          disabled={submitting || !text.trim()}
+          className="px-4 py-1.5 rounded-full bg-[#1dddf2] hover:bg-[#1dddf2b7] text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95"
+          disabled={isPending || !text.trim()}
         >
-          {submitting ? "Posting..." : "Comment"}
+          {isPending ? "Posting..." : parentId ? "Reply" : "Comment"}
         </button>
 
-        <button
-          className="px-4 py-1.5 rounded-full border border-[#1a2836] hover:border-[#2a3846] text-gray-400 hover:text-gray-300 text-sm font-semibold transition-all duration-200 active:scale-95"
-          onClick={handleCancel}
-        >
-          Cancel
-        </button>
+        <span className="text-xs text-gray-500 ml-auto">
+          {text.length}/1000
+        </span>
       </div>
     </div>
   );
 }
 
-function Comment({ comment, onToggleCollapse, depth = 0, onVote, onReply, router }) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [showReply, setShowReply] = useState(false);
-  const [userVote, setUserVote] = useState(null);
+function EditCommentForm({ comment, onCancel, onSuccess }) {
+  const [text, setText] = useState(comment.content);
+  const { mutate: updateComment, isPending } = useUpdateComment();
 
-  const handleVote = (voteType) => {
-    const newVote = userVote === voteType ? null : voteType;
-    setUserVote(newVote);
-    onVote?.(comment.id, newVote);
-  };
-
-  const handleReply = (text) => {
-    onReply?.(text, comment.id);
-    setShowReply(false);
+  const handleSubmit = () => {
+    if (!text.trim()) return;
+    
+    updateComment(
+      {
+        commentId: comment.commentId,
+        content: text.trim(),
+      },
+      {
+        onSuccess: () => {
+          onSuccess?.();
+        },
+        onError: (error) => {
+          console.error("Failed to update comment:", error);
+          alert(error.response?.data?.message || "Failed to update comment");
+        },
+      }
+    );
   };
 
   return (
-    <div className={`relative ${depth > 0 ? "ml-6 md:ml-8" : ""}`}>
-      {depth > 0 && (
-        <div className="absolute left-0 top-0 bottom-0 w-0.5 bg-gradient-to-b from-[#1a2836] to-transparent" />
-      )}
-      
-      <div className={`flex gap-2 md:gap-3 ${depth > 0 ? "ml-4" : ""}`}>
-        {/* Vote buttons */}
-        <div className="flex flex-col items-center gap-1 pt-1">
-          <button
-            onClick={() => handleVote("upvote")}
-            className={`p-1 rounded transition-all duration-200 hover:scale-110 active:scale-95 ${
-              userVote === "upvote"
-                ? "text-[#ff4500]"
-                : "text-gray-500 hover:text-[#ff4500]"
-            }`}
-          >
-            <ArrowUp className="w-4 h-4" />
-          </button>
-          
-          <span
-            className={`text-xs font-bold ${
-              userVote === "upvote"
-                ? "text-[#ff4500]"
-                : userVote === "downvote"
-                ? "text-[#7193ff]"
-                : "text-gray-400"
-            }`}
-          >
-            {comment.votes || 0}
-          </span>
-          
-          <button
-            onClick={() => handleVote("downvote")}
-            className={`p-1 rounded transition-all duration-200 hover:scale-110 active:scale-95 ${
-              userVote === "downvote"
-                ? "text-[#7193ff]"
-                : "text-gray-500 hover:text-[#7193ff]"
-            }`}
-          >
-            <ArrowDown className="w-4 h-4" />
-          </button>
+    <div className="flex flex-col gap-2 mt-2">
+      <textarea
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        rows={3}
+        className="w-full bg-[#020d17] border border-[#1a2836] rounded-lg p-3 text-sm text-gray-200 placeholder-gray-500 focus:outline-none focus:border-[#1dddf2] focus:ring-1 focus:ring-[#1dddf2] transition-all resize-none"
+        maxLength={1000}
+        autoFocus
+      />
+
+      <div className="flex gap-2 items-center">
+        <button
+          onClick={handleSubmit}
+          className="px-4 py-1.5 rounded-full bg-[#1dddf2] hover:bg-[#1dddf2b9] text-white text-sm font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 active:scale-95 flex items-center gap-1"
+          disabled={isPending || !text.trim()}
+        >
+          <Check className="w-4 h-4" />
+          {isPending ? "Saving..." : "Save"}
+        </button>
+
+        <button
+          className="px-4 py-1.5 rounded-full border border-[#1a2836] hover:border-[#2a3846] text-gray-400 hover:text-gray-300 text-sm font-semibold transition-all duration-200 active:scale-95 flex items-center gap-1"
+          onClick={onCancel}
+          disabled={isPending}
+        >
+          <X className="w-4 h-4" />
+          Cancel
+        </button>
+
+        <span className="text-xs text-gray-500 ml-auto">
+          {text.length}/1000
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function RepliesList({ commentId, postId, router, user }) {
+  const [page, setPage] = useState(1);
+  const [editingReplyId, setEditingReplyId] = useState(null);
+  const { data: repliesData, isLoading, refetch } = useReplies(commentId, { page, limit: 10 });
+  const { mutate: deleteComment } = useDeleteComment();
+
+  const replies = repliesData?.data || [];
+  const pagination = repliesData?.pagination;
+
+  const handleDelete = (replyId) => {
+    if (!confirm("Are you sure you want to delete this reply?")) return;
+    
+    deleteComment(replyId, {
+      onSuccess: () => {
+        refetch();
+      },
+      onError: (error) => {
+        console.error("Failed to delete reply:", error);
+        alert(error.response?.data?.message || "Failed to delete reply");
+      },
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center py-4">
+        <Loader2 className="w-5 h-5 text-[#1dddf2] animate-spin" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-3 ml-6 md:ml-8 mt-3">
+      {replies.map((reply) => (
+        <div key={reply.commentId} className="flex gap-2 md:gap-3">
+          {/* User Avatar */}
+          <img
+            src={reply.user?.avatarLink || '/default-avatar.png'}
+            alt={reply.user?.name || 'User'}
+            referrerPolicy="no-referrer"
+            className="w-8 h-8 rounded-full object-cover border-2 border-[#1a2836] flex-shrink-0"
+          />
+
+          {/* Reply content */}
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+              <span
+                onClick={() => router.push(`/profile/${reply.userId}`)}
+                className={`text-sm font-semibold hover:underline cursor-pointer transition-colors ${
+                  reply.user?.role === 'admin'
+                    ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#ff4500] via-[#ff6b35] to-[#ffa500]'
+                    : 'text-gray-300'
+                }`}
+              >
+                {reply.user?.name || "Unknown User"}
+              </span>
+              
+              {reply.user?.role === 'admin' && (
+                <span className="px-2 py-0.5 bg-gradient-to-r from-[#ff4500] to-[#ff6b35] text-white text-xs font-bold rounded-md uppercase tracking-wide shadow-lg">
+                  Admin
+                </span>
+              )}
+              
+              <span className="text-xs text-gray-500">
+                {formatTimeAgo(reply.createdAt)}
+              </span>
+              
+              {reply.isEdited && (
+                <span className="text-xs text-gray-500 italic">(edited)</span>
+              )}
+            </div>
+
+            {editingReplyId === reply.commentId ? (
+              <EditCommentForm
+                comment={reply}
+                onCancel={() => setEditingReplyId(null)}
+                onSuccess={() => {
+                  setEditingReplyId(null);
+                  refetch();
+                }}
+              />
+            ) : (
+              <>
+                <div className="text-sm text-gray-300 leading-relaxed mb-2">
+                  {reply.content}
+                </div>
+
+                {/* Action buttons - only show if user owns the reply */}
+                {user && user.userId === reply.userId && (
+                  <div className="flex items-center gap-3 text-xs text-gray-500">
+                    <button
+                      className="flex items-center gap-1 hover:text-[#1dddf2] transition-colors"
+                      onClick={() => setEditingReplyId(reply.commentId)}
+                    >
+                      <Edit2 size={14} />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                      onClick={() => handleDelete(reply.commentId)}
+                    >
+                      <Trash2 size={14} />
+                      <span>Delete</span>
+                    </button>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
         </div>
+      ))}
+
+      {/* Load more replies */}
+      {pagination && pagination.page < pagination.totalPages && (
+        <button
+          onClick={() => setPage(p => p + 1)}
+          className="text-sm text-[#ff4500] hover:text-[#ff5722] font-semibold transition-colors"
+        >
+          Load more replies ({pagination.total - replies.length} remaining)
+        </button>
+      )}
+    </div>
+  );
+}
+
+function Comment({ comment, postId, router, user }) {
+  const [showReply, setShowReply] = useState(false);
+  const [showReplies, setShowReplies] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const { mutate: deleteComment } = useDeleteComment();
+
+  const handleReplySubmit = () => {
+    setShowReply(false);
+    setShowReplies(true);
+  };
+
+  const handleDelete = () => {
+    if (!confirm("Are you sure you want to delete this comment?")) return;
+    
+    deleteComment(comment.commentId, {
+      onError: (error) => {
+        console.error("Failed to delete comment:", error);
+        alert(error.response?.data?.message || "Failed to delete comment");
+      },
+    });
+  };
+
+  return (
+    <div className="relative">
+      <div className="flex gap-2 md:gap-3">
+        {/* User Avatar */}
+        <img
+          src={comment.user?.avatarLink || '/default-avatar.png'}
+          alt={comment.user?.name || 'User'}
+          referrerPolicy="no-referrer"
+          className="w-10 h-10 rounded-full object-cover border-2 border-[#1a2836] flex-shrink-0"
+        />
 
         {/* Comment content */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-1.5">
+          <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span
               onClick={() => router.push(`/profile/${comment.userId}`)}
-              className="text-sm font-semibold text-gray-300 hover:text-[#ff4500] cursor-pointer transition-colors"
+              className={`text-sm font-semibold hover:underline cursor-pointer transition-colors ${
+                comment.user?.role === 'admin'
+                  ? 'text-transparent bg-clip-text bg-gradient-to-r from-[#ff4500] via-[#ff6b35] to-[#ffa500]'
+                  : 'text-gray-300'
+              }`}
             >
-              {comment.user?.name}
+              {comment.user?.name || "Unknown User"}
             </span>
+            
+            {comment.user?.role === 'admin' && (
+              <span className="px-2 py-0.5 bg-gradient-to-r from-[#ff4500] to-[#ff6b35] text-white text-xs font-bold rounded-md uppercase tracking-wide shadow-lg">
+                Admin
+              </span>
+            )}
+            
             <span className="text-xs text-gray-500">
               {formatTimeAgo(comment.createdAt)}
             </span>
+            
+            {comment.isEdited && (
+              <span className="text-xs text-gray-500 italic">(edited)</span>
+            )}
           </div>
 
-          <div
-            className={`text-sm text-gray-300 leading-relaxed mb-2 ${
-              collapsed ? "line-clamp-2" : ""
-            }`}
-          >
-            {comment.text}
-          </div>
+          {isEditing ? (
+            <EditCommentForm
+              comment={comment}
+              onCancel={() => setIsEditing(false)}
+              onSuccess={() => setIsEditing(false)}
+            />
+          ) : (
+            <>
+              <div className="text-sm text-gray-300 leading-relaxed mb-2">
+                {comment.content}
+              </div>
 
-          {/* Action buttons */}
-          <div className="flex items-center gap-3 text-xs text-gray-500">
-            <button
-              onClick={() => {
-                setCollapsed((c) => !c);
-                onToggleCollapse?.(comment.id, !collapsed);
-              }}
-              className="flex items-center gap-1 hover:text-gray-300 transition-colors"
-            >
-              {collapsed ? (
-                <>
-                  <PlusCircle size={14} />
-                  <span>Expand</span>
-                </>
-              ) : (
-                <>
-                  <MinusCircle size={14} />
-                  <span>Collapse</span>
-                </>
-              )}
-            </button>
+              {/* Action buttons */}
+              <div className="flex items-center gap-3 text-xs text-gray-500">
+                <button
+                  className="flex items-center gap-1 hover:text-gray-300 transition-colors"
+                  onClick={() => setShowReply((prev) => !prev)}
+                >
+                  <Reply size={14} />
+                  <span>Reply</span>
+                </button>
 
-            <button
-              className="flex items-center gap-1 hover:text-gray-300 transition-colors"
-              onClick={() => setShowReply((prev) => !prev)}
-            >
-              <Reply size={14} />
-              <span>Reply</span>
-            </button>
-          </div>
+                {/* View replies button */}
+                <button
+                  className="flex items-center gap-1 hover:text-gray-300 transition-colors"
+                  onClick={() => setShowReplies((prev) => !prev)}
+                >
+                  {showReplies ? (
+                    <>
+                      <ChevronUp size={14} />
+                      <span>Hide replies</span>
+                    </>
+                  ) : (
+                    <>
+                      <ChevronDown size={14} />
+                      <span>View replies</span>
+                    </>
+                  )}
+                </button>
+
+                {/* Edit and Delete - only show if user owns the comment */}
+                {user && user.userId === comment.userId && (
+                  <>
+                    <button
+                      className="flex items-center gap-1 hover:text-[#1dddf2] transition-colors"
+                      onClick={() => setIsEditing(true)}
+                    >
+                      <Edit2 size={14} />
+                      <span>Edit</span>
+                    </button>
+
+                    <button
+                      className="flex items-center gap-1 hover:text-blue-500 transition-colors"
+                      onClick={handleDelete}
+                    >
+                      <Trash2 size={14} />
+                      <span>Delete</span>
+                    </button>
+                  </>
+                )}
+              </div>
+            </>
+          )}
 
           {/* Reply form */}
-          {showReply && (
+          {showReply && !isEditing && (
             <div className="mt-3">
               <InlineReply
-                parentId={comment.id}
+                parentId={comment.commentId}
+                postId={postId}
                 onCancel={() => setShowReply(false)}
-                onSubmit={handleReply}
+                onSubmit={handleReplySubmit}
               />
             </div>
           )}
 
-          {/* Nested comments */}
-          {comment.children?.length > 0 && !collapsed && (
-            <div className="mt-3 space-y-3">
-              {comment.children.map((c) => (
-                <Comment
-                  key={c.id}
-                  comment={c}
-                  onToggleCollapse={onToggleCollapse}
-                  depth={depth + 1}
-                  onVote={onVote}
-                  onReply={onReply}
-                  router={router}
-                />
-              ))}
-            </div>
+          {/* Replies list */}
+          {showReplies && !isEditing && (
+            <RepliesList 
+              commentId={comment.commentId} 
+              postId={postId} 
+              router={router}
+              user={user}
+            />
           )}
         </div>
       </div>
@@ -237,54 +428,88 @@ function Comment({ comment, onToggleCollapse, depth = 0, onVote, onReply, router
   );
 }
 
-export default function CommentsSection({ comments = [], onCommentSubmit, onVote, router }) {
-  const [collapsedComments, setCollapsedComments] = useState(new Set());
+export default function CommentsSection({ postId, router, user }) {
+  const [page, setPage] = useState(1);
+  const { data: commentsData, isLoading, refetch, isFetching } = useComments(postId, { page, limit: 20 });
 
-  const handleToggleCollapse = (id) => {
-    setCollapsedComments((prev) => {
-      const updated = new Set(prev);
-      updated.has(id) ? updated.delete(id) : updated.add(id);
-      return updated;
-    });
+  const comments = commentsData?.data || [];
+  const pagination = commentsData?.pagination;
+
+  const handleRefresh = () => {
+    refetch();
   };
 
-  const tree = buildTree(comments);
-  const sortedTree = [...tree].sort(
-    (a, b) => new Date(b.createdAt) - new Date(a.createdAt)
-  );
-
   return (
-    <div className="bg-[#0d1d2c] rounded-xl p-4 border border-[#1a2836]">
-      {/* Header */}
-      <h3 className="text-lg font-semibold mb-4 text-gray-200">
-        Comments ({comments.length})
-      </h3>
-
-      {/* Comment input */}
-      <div className="mb-6">
-        <InlineReply parentId={null} onSubmit={onCommentSubmit} />
+    <div className="bg-[#0d1d2c] rounded-sm p-4 border border-[#1a2836]">
+      {/* Header with refresh button */}
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-gray-200">
+          Comments ({pagination?.total || 0})
+        </h3>
+        
+        <button
+          onClick={handleRefresh}
+          disabled={isFetching}
+          className="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-400 hover:text-gray-300 hover:bg-[#1a2836] rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50"
+        >
+          <RefreshCw className={`w-4 h-4 ${isFetching ? 'animate-spin' : ''}`} />
+          <span>Refresh</span>
+        </button>
       </div>
+
+      {/* Comment input - only for top-level comments */}
+      <div className="mb-6">
+        <InlineReply 
+          postId={postId} 
+          parentId={null}
+          onSubmit={handleRefresh} 
+        />
+      </div>
+
+      {/* Loading state */}
+      {isLoading && (
+        <div className="flex justify-center py-12">
+          <div className="flex flex-col items-center gap-3">
+            <Loader2 className="w-6 h-6 text-[#1dddf2] animate-spin" />
+            <p className="text-gray-400 text-sm">Loading comments...</p>
+          </div>
+        </div>
+      )}
 
       {/* Comments list */}
-      <div className="space-y-4 pt-4 border-t border-[#1a2836]">
-        {sortedTree.map((c) => (
-          <Comment
-            key={c.id}
-            comment={c}
-            onToggleCollapse={handleToggleCollapse}
-            onVote={onVote}
-            onReply={onCommentSubmit}
-            router={router}
-          />
-        ))}
-        {sortedTree.length === 0 && (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-sm">
-              No comments yet. Be the first to share your thoughts!
-            </p>
-          </div>
-        )}
-      </div>
+      {!isLoading && (
+        <div className="space-y-4 pt-4 border-t border-[#1a2836]">
+          {comments.map((comment) => (
+            <Comment
+              key={comment.commentId}
+              comment={comment}
+              postId={postId}
+              router={router}
+              user={user}
+            />
+          ))}
+
+          {comments.length === 0 && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 text-sm">
+                No comments yet. Be the first to share your thoughts!
+              </p>
+            </div>
+          )}
+
+          {/* Load more comments */}
+          {pagination && pagination.page < pagination.totalPages && (
+            <div className="flex justify-center pt-4">
+              <button
+                onClick={() => setPage(p => p + 1)}
+                className="px-6 py-2 bg-[#1a2836] hover:bg-[#243647] text-gray-300 rounded-lg font-semibold transition-all duration-200 active:scale-95"
+              >
+                Load more comments ({pagination.total - comments.length} remaining)
+              </button>
+            </div>
+          )}
+        </div>
+      )}
     </div>
   );
 }
