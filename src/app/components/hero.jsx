@@ -17,8 +17,11 @@ import {
   ArrowDown,
   Menu,
   RefreshCw,
+  SendHorizontal
 } from "lucide-react";
 import { usePosts, useVotePost } from "@/lib/hooks/usePosts";
+import { useCreateComment } from "@/lib/hooks/useComments";
+import { useAuth } from "@/lib/hooks/useAuth";
 import { useRouter } from "next/navigation";
 
 export default function RedditFeed() {
@@ -27,7 +30,10 @@ export default function RedditFeed() {
   const [page, setPage] = useState(1);
   const [lastRefresh, setLastRefresh] = useState(null);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [text, setText] = useState("");
   const router = useRouter();
+  const { data: authData } = useAuth();
+  const user = authData?.user || null;
 
   // Map filter names to API sortBy values
   const sortByMap = {
@@ -47,6 +53,7 @@ export default function RedditFeed() {
   console.log(postsData);
 
   const { mutate: votePost } = useVotePost();
+  const { mutate: createComment, isPending } = useCreateComment();
 
   const handleVote = (postId, voteType) => {
     votePost({ postId, voteType });
@@ -82,6 +89,29 @@ export default function RedditFeed() {
     return count.toString();
   };
 
+  const handleSubmit = async (content, postId, parentId = null) => {
+    if (!content.trim()) return;
+
+    createComment(
+      {
+        postId,
+        content: content.trim(),
+        parentCommentId: parentId,
+      },
+      {
+        onSuccess: () => {
+          setText("");
+          setShowCommentInput(null);
+        },
+        onError: (error) => {
+          console.error("Failed to create comment:", error);
+          alert(error.response?.data?.message || "Failed to post comment");
+        },
+      }
+    );
+  };
+
+
   return (
     <div className="min-h-screen bg-[#020d17]">
       {/* Main Container */}
@@ -104,10 +134,9 @@ export default function RedditFeed() {
                   py-2 sm:py-2.5 md:py-3 lg:py-3.5 
                   text-xs sm:text-sm md:text-base
                   transition-all relative rounded-lg whitespace-nowrap flex-shrink-0
-                  ${
-                    activeFilter === filter.name
-                      ? "text-white bg-[#272729]"
-                      : "text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1d]"
+                  ${activeFilter === filter.name
+                    ? "text-white bg-[#272729]"
+                    : "text-gray-400 hover:text-gray-200 hover:bg-[#1c1c1d]"
                   }
                 `}
               >
@@ -223,7 +252,7 @@ export default function RedditFeed() {
 
                       {/* Right side - Image (40% on desktop, fixed height) */}
                       {post.media && post.media.length > 0 && (
-                        <div 
+                        <div
                           className="w-full h-52 md:w-[45%] md:h-36 lg:h-40 xl:h-44 flex-shrink-0 rounded-md sm:rounded-lg overflow-hidden cursor-pointer"
                           onClick={() =>
                             setShowCommentInput(
@@ -271,7 +300,7 @@ export default function RedditFeed() {
                       >
                         <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
                         <span className="text-[10px] sm:text-xs md:text-sm font-semibold">
-                          {post.commentCount || 0}
+                          {post.commentCount || post.commentIds?.length || 0}
                         </span>
                       </button>
 
@@ -292,15 +321,39 @@ export default function RedditFeed() {
 
                     {/* Comment Input */}
                     {showCommentInput === post.postId && (
-                      <div className="mt-2 sm:mt-3">
+                      <div className="mt-2 sm:mt-3 relative">
                         <input
                           type="text"
                           placeholder="Write a comment..."
-                          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 rounded sm:rounded-md md:rounded-lg bg-[#1a1a1b] border border-gray-700 text-gray-200 placeholder:text-gray-500 focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-xs sm:text-sm"
+                          className="w-full px-2 sm:px-3 py-1.5 sm:py-2 pr-10 rounded sm:rounded-md md:rounded-lg bg-[#1a1a1b] border border-gray-700 text-gray-200 placeholder:text-gray-500 focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-xs sm:text-sm"
+                          value={text}
+                          onChange={(e) => setText(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter" && text.trim() && user) {
+                              e.preventDefault();
+                              handleSubmit(text, post.postId, null);
+                            }
+                          }}
                           autoFocus
                         />
-                      </div>
+
+                        {/* Lucide icon button */}
+                        <button
+                          onClick={() => handleSubmit(text, post.postId, null)}
+                          disabled={!text.trim() || !user}   // ← disabled if no text or not logged in
+                          className={`absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer
+               p-1 rounded transition-all
+               ${text.trim() && user
+                              ? "text-blue-500 hover:text-blue-400"
+                              : "text-gray-600 cursor-not-allowed opacity-50"
+                            }`}
+                        >
+                          <SendHorizontal size={18} />
+                        </button>
+                        </div>
                     )}
+
+
                   </div>
                 </div>
               </div>
