@@ -1,7 +1,7 @@
 "use client";
 import React, { useState, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
-import { useSearchPosts } from "@/lib/hooks/usePosts";
+import { useSearch } from "@/lib/hooks/useSearch";
 import { 
   Search, 
   TrendingUp, 
@@ -15,17 +15,24 @@ import {
   MessageSquare,
   Share2,
   Bookmark,
-  MoreHorizontal
+  AlertCircle,
+  Zap
 } from "lucide-react";
+import { useAuth } from "@/lib/hooks/useAuth";
 
 export default function SearchResultsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
+  const enhanced = searchParams.get("enhanced") === "true";
   const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState("relevance");
   const [showImageModal, setShowImageModal] = useState(null);
   const limit = 10;
+
+  // Get auth data for enhanced search toggle
+  const { data: authData } = useAuth();
+  const user = authData?.user || null;
 
   // Fetch search results
   const { 
@@ -34,12 +41,17 @@ export default function SearchResultsPage() {
     isError, 
     error, 
     isFetching 
-  } = useSearchPosts(query, { page, sortBy, limit });
+  } = useSearch(query, { 
+    page, 
+    sortBy, 
+    limit,
+    enhanced 
+  });
 
   // Reset page when query changes
   useEffect(() => {
     setPage(1);
-  }, [query]);
+  }, [query, enhanced]);
 
   // Scroll to top on page change
   useEffect(() => {
@@ -49,6 +61,14 @@ export default function SearchResultsPage() {
   const handleSortChange = (newSort) => {
     setSortBy(newSort);
     setPage(1);
+  };
+
+  const toggleEnhancedSearch = () => {
+    if (!user) return;
+    const newUrl = enhanced 
+      ? `/search?q=${encodeURIComponent(query)}`
+      : `/search?q=${encodeURIComponent(query)}&enhanced=true`;
+    router.push(newUrl);
   };
 
   // Format time ago
@@ -91,7 +111,7 @@ export default function SearchResultsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#020d17] pt-24 px-3 sm:px-4 pb-12">
+    <div className="min-h-screen bg-[#020d17] pt-16 px-3 sm:px-4 pb-12">
       <div className="max-w-[1200px] mx-auto">
         {/* Search Header */}
         <div className="mb-6">
@@ -100,9 +120,16 @@ export default function SearchResultsPage() {
             <h1 className="text-xl sm:text-2xl font-bold text-white">
               Search Results
             </h1>
+            {enhanced && (
+              <span className="px-2 py-1 bg-gradient-to-r from-[#1dddf2]/20 to-[#00ff11]/20 border border-[#1dddf2]/30 rounded-full text-xs font-semibold text-[#1dddf2] flex items-center gap-1">
+                <Sparkles className="w-3 h-3" />
+                Enhanced
+              </span>
+            )}
           </div>
           
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div className="flex flex-col gap-3">
+            {/* Query Info */}
             <p className="text-gray-400 text-sm">
               Showing results for: <span className="text-[#1dddf2] font-semibold">"{query}"</span>
               {data?.pagination && (
@@ -112,29 +139,62 @@ export default function SearchResultsPage() {
               )}
             </p>
 
-            {/* Sort Options */}
-            <div className="flex items-center gap-2">
-              <span className="text-gray-500 text-sm">Sort by:</span>
-              <div className="flex gap-2">
-                {[
-                  { value: "relevance", label: "Relevance", icon: Sparkles },
-                  { value: "recent", label: "Recent", icon: Clock },
-                  { value: "popular", label: "Popular", icon: TrendingUp }
-                ].map(({ value, label, icon: Icon }) => (
-                  <button
-                    key={value}
-                    onClick={() => handleSortChange(value)}
-                    className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${
-                      sortBy === value
-                        ? "bg-[#1dddf2] text-white"
-                        : "bg-[#0d1d2c] text-gray-400 hover:bg-[#323234] border border-[#343536]"
-                    }`}
-                  >
-                    <Icon className="w-3.5 h-3.5" />
-                    <span className="hidden sm:inline">{label}</span>
-                  </button>
-                ))}
+            {/* Enhanced Search Info for Comments */}
+            {enhanced && data?.matchingComments && data.matchingComments.length > 0 && (
+              <div className="bg-gradient-to-r from-[#1dddf2]/10 to-[#00ff11]/10 border border-[#1dddf2]/30 rounded-lg p-3 flex items-start gap-2">
+                <Zap className="w-4 h-4 text-[#1dddf2] flex-shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="text-[#1dddf2] text-sm font-semibold">
+                    Found in {data.matchingComments.length} comment{data.matchingComments.length !== 1 ? 's' : ''}
+                  </p>
+                  <p className="text-gray-400 text-xs mt-0.5">
+                    Enhanced search found matches in post comments
+                  </p>
+                </div>
               </div>
+            )}
+
+            {/* Controls Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              {/* Sort Options */}
+              <div className="flex items-center gap-2">
+                <span className="text-gray-500 text-sm">Sort by:</span>
+                <div className="flex gap-2">
+                  {[
+                    { value: "relevance", label: "Relevance", icon: Sparkles },
+                    { value: "recent", label: "Recent", icon: Clock },
+                    { value: "popular", label: "Popular", icon: TrendingUp }
+                  ].map(({ value, label, icon: Icon }) => (
+                    <button
+                      key={value}
+                      onClick={() => handleSortChange(value)}
+                      className={`flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                        sortBy === value
+                          ? "bg-[#1dddf2] text-white"
+                          : "bg-[#0d1d2c] text-gray-400 hover:bg-[#323234] border border-[#343536]"
+                      }`}
+                    >
+                      <Icon className="w-3.5 h-3.5" />
+                      <span className="hidden sm:inline">{label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Enhanced Search Toggle - Only for authenticated users */}
+              {user && (
+                <button
+                  onClick={toggleEnhancedSearch}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                    enhanced
+                      ? "bg-gradient-to-r from-[#1dddf2] to-[#00ff11] text-white shadow-[0_0_10px_rgba(29,221,242,0.5)]"
+                      : "bg-[#0d1d2c] text-gray-400 hover:bg-[#323234] border border-[#343536] hover:border-[#1dddf2]/50"
+                  }`}
+                >
+                  <Sparkles className={`w-4 h-4 ${enhanced ? 'animate-pulse' : ''}`} />
+                  <span>{enhanced ? 'Enhanced' : 'Standard'} Search</span>
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -143,13 +203,16 @@ export default function SearchResultsPage() {
         {isLoading && (
           <div className="flex flex-col items-center justify-center py-20">
             <Loader2 className="w-12 h-12 text-[#1dddf2] animate-spin mb-4" />
-            <p className="text-gray-400">Searching...</p>
+            <p className="text-gray-400">
+              {enhanced ? 'Running enhanced search...' : 'Searching...'}
+            </p>
           </div>
         )}
 
         {/* Error State */}
         {isError && (
           <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-6 text-center">
+            <AlertCircle className="w-12 h-12 text-red-400 mx-auto mb-3" />
             <p className="text-red-400 font-medium mb-2">Search Failed</p>
             <p className="text-gray-400 text-sm">
               {error?.response?.data?.message || error?.message || "Something went wrong"}
@@ -171,12 +234,23 @@ export default function SearchResultsPage() {
                 <p className="text-gray-500 mb-6">
                   Try different keywords or check your spelling
                 </p>
-                <button
-                  onClick={() => router.push("/")}
-                  className="px-6 py-2.5 bg-[#1dddf2] text-white rounded-full font-medium hover:bg-[#1dddf2]/90 transition-all"
-                >
-                  Back to Home
-                </button>
+                {user && !enhanced && (
+                  <button
+                    onClick={toggleEnhancedSearch}
+                    className="px-6 py-2.5 bg-gradient-to-r from-[#1dddf2] to-[#00ff11] text-white rounded-full font-medium hover:shadow-[0_0_20px_rgba(29,221,242,0.6)] transition-all flex items-center gap-2 mx-auto"
+                  >
+                    <Sparkles className="w-4 h-4" />
+                    Try Enhanced Search
+                  </button>
+                )}
+                {!user && (
+                  <button
+                    onClick={() => router.push("/")}
+                    className="px-6 py-2.5 bg-[#1dddf2] text-white rounded-full font-medium hover:bg-[#1dddf2]/90 transition-all"
+                  >
+                    Back to Home
+                  </button>
+                )}
               </div>
             ) : (
               <div className="space-y-2 sm:space-y-3 md:space-y-4">
@@ -188,7 +262,7 @@ export default function SearchResultsPage() {
                   </div>
                 )}
 
-                {/* Search Results List - Same style as home feed */}
+                {/* Search Results List */}
                 {data.data.map((post) => (
                   <div
                     key={post.postId}
@@ -206,7 +280,6 @@ export default function SearchResultsPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Handle upvote
                           }}
                           className="text-gray-400 hover:text-[#ff4500] p-0.5 sm:p-1 rounded transition-all duration-300 hover:scale-110 active:scale-95"
                         >
@@ -218,7 +291,6 @@ export default function SearchResultsPage() {
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            // Handle downvote
                           }}
                           className="text-gray-400 hover:text-[#7193ff] p-0.5 sm:p-1 rounded transition-all duration-300 hover:scale-110 active:scale-95"
                         >
