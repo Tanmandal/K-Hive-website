@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   Plus,
   User,
@@ -11,20 +11,21 @@ import {
 import SignUpModal from "./sign-up";
 import { useAuth, useLogout } from "@/lib/hooks/useAuth";
 import { authApi } from "@/lib/api/auth";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import CreatePostModal from "./CreateModal";
 import { useCreatePost } from "@/lib/hooks/usePosts";
 import { mediaApi } from "@/lib/api/media";
 import { useToast } from "@/components/Toast";
 import SearchBar from "../components/Searchbar";
 
-export default function RedditNavbar() {
+export default function RedditNavbar({ onMobileSidebarToggle }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileSearchOpen, setMobileSearchOpen] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
   const createPostMutation = useCreatePost();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutate: logout } = useLogout();
@@ -143,18 +144,27 @@ export default function RedditNavbar() {
         <div className="px-3 sm:px-4 py-3 sm:py-4">
           <div className="flex items-center justify-between gap-2 sm:gap-4 max-w-[1400px] mx-auto">
             {/* Logo Section */}
-            <div 
-              className="flex items-center gap-2 sm:gap-3 flex-shrink-0 cursor-pointer"
-              onClick={() => router.push("/")}
-            >
-              <div className="bg-[#37ff0074] rounded-full w-5 h-5 sm:w-8 sm:h-8 lg:w-10 lg:h-10 flex items-center justify-center">
-                <span className="text-white font-bold text-lg sm:text-xl lg:text-2xl">
-                  K
-                </span>
+            <div className="flex items-center gap-2 sm:gap-3">
+              {/* Mobile Sidebar Toggle - Only show on non-profile pages */}
+              {!pathname?.startsWith("/profile") && onMobileSidebarToggle && (
+                <button
+                  onClick={onMobileSidebarToggle}
+                  className="lg:hidden p-2 text-gray-200 hover:bg-[#323234] rounded-full transition-all flex-shrink-0"
+                >
+                  <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
+                </button>
+              )}
+              
+              <div 
+                className="flex items-center flex-shrink-0 cursor-pointer"
+                onClick={() => router.push("/")}
+              >
+                <img 
+                  src="/KHive/k-logo2.png" 
+                  alt="K-Hive" 
+                  className="h-8 sm:h-10 lg:h-12 w-auto object-contain"
+                />
               </div>
-              <span className="text-white font-semibold text-lg sm:text-xl lg:text-2xl hidden sm:block whitespace-nowrap">
-                K-Hive
-              </span>
             </div>
 
             {/* Desktop Search Bar */}
@@ -317,28 +327,114 @@ export default function RedditNavbar() {
               {isLoading ? (
                 <div className="w-8 h-8 bg-[#323234] rounded-full animate-pulse"></div>
               ) : isLoggedIn && user ? (
-                <button
-                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="flex items-center gap-2"
-                >
-                  {user.avatarLink ? (
-                    <img
-                      src={user.avatarLink}
-                      alt={user.name}
-                      className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-[#00ff1187] flex items-center justify-center">
-                      <span className="text-white font-semibold text-sm">
-                        {user.name?.[0]?.toUpperCase() || "U"}
-                      </span>
-                    </div>
-                  )}
-                </button>
+                <>
+                  {/* Create Post Button - Mobile */}
+                  <button
+                    onClick={() => setIsCreateModalOpen(true)}
+                    className="p-2 text-white bg-gradient-to-r from-[#1dddf2] to-[#00ff11] rounded-full hover:shadow-[0_0_15px_rgba(29,221,242,0.6)] transition-all"
+                  >
+                    <Plus className="w-5 h-5" />
+                  </button>
+
+                  {/* User Avatar with Dropdown */}
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowUserMenu(!showUserMenu)}
+                      className="flex items-center"
+                    >
+                      {user.avatarLink ? (
+                        <img
+                          src={user.avatarLink}
+                          alt={user.name}
+                          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full object-cover border-2 border-[#1dddf2]/50"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-full bg-gradient-to-br from-[#1dddf2] to-[#00ff11] flex items-center justify-center border-2 border-[#1dddf2]/50">
+                          <span className="text-white font-semibold text-sm">
+                            {user.name?.[0]?.toUpperCase() || "U"}
+                          </span>
+                        </div>
+                      )}
+                    </button>
+
+                    {/* Mobile User Dropdown */}
+                    {showUserMenu && (
+                      <div className="absolute right-0 mt-2 w-64 bg-[#0d1d2c] border border-[#1dddf2]/30 shadow-[0_0_20px_rgba(29,221,242,0.2)] rounded-lg overflow-hidden slide-down">
+                        <div className="px-4 py-3 bg-gradient-to-r from-[#1dddf2]/10 to-[#00ff11]/10 border-b border-[#1dddf2]/20">
+                          <div className="flex items-center gap-3">
+                            {user.avatarLink ? (
+                              <img
+                                src={user.avatarLink}
+                                alt={user.name}
+                                className="w-12 h-12 rounded-full object-cover"
+                              />
+                            ) : (
+                              <div className="w-12 h-12 rounded-full bg-gradient-to-br from-[#1dddf2] to-[#00ff11] flex items-center justify-center">
+                                <span className="text-white font-bold text-lg">
+                                  {user.name?.[0]?.toUpperCase() || "U"}
+                                </span>
+                              </div>
+                            )}
+                            <div className="flex-1 min-w-0">
+                              <p className="text-white font-semibold truncate">
+                                {user.name}
+                              </p>
+                              <p className="text-gray-400 text-sm truncate">
+                                {user.gmailId || user.email}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="py-2">
+                          <button
+                            onClick={() => {
+                              router.push("/profile");
+                              setShowUserMenu(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-[#323234] transition-all"
+                          >
+                            <User className="w-5 h-5 text-[#1dddf2]" />
+                            <div className="flex-1 text-left">
+                              <p className="text-sm font-medium">Profile</p>
+                              <p className="text-xs text-gray-400">View your profile</p>
+                            </div>
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              setShowUserMenu(false);
+                            }}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-[#323234] transition-all"
+                          >
+                            <Settings className="w-5 h-5 text-[#1dddf2]" />
+                            <div className="flex-1 text-left">
+                              <p className="text-sm font-medium">Settings</p>
+                              <p className="text-xs text-gray-400">Manage preferences</p>
+                            </div>
+                          </button>
+
+                          <div className="border-t border-[#343536] my-2"></div>
+
+                          <button
+                            onClick={handleLogout}
+                            className="w-full flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 transition-all"
+                          >
+                            <LogOut className="w-5 h-5" />
+                            <div className="flex-1 text-left">
+                              <p className="text-sm font-medium">Logout</p>
+                              <p className="text-xs text-red-300/70">Sign out of your account</p>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </>
               ) : (
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="relative bg-[#00ff1187] hover:bg-[#ff5722] text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-colors overflow-hidden"
+                  className="relative bg-gradient-to-r from-[#1dddf2] to-[#00ff11] hover:shadow-[0_0_15px_rgba(29,221,242,0.6)] text-white px-4 sm:px-6 py-2 sm:py-2.5 rounded-full font-semibold text-xs sm:text-sm transition-colors overflow-hidden"
                 >
                   <span className="relative z-10 whitespace-nowrap">
                     Sign Up
@@ -346,17 +442,6 @@ export default function RedditNavbar() {
                   <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/40 to-transparent translate-x-[-100%] animate-shimmer"></span>
                 </button>
               )}
-
-              <button
-                className="p-2 text-gray-200 bg-[#0d1d2c] border-t border-[#1dddf2]/20 rounded-full transition-all"
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              >
-                {mobileMenuOpen ? (
-                  <X className="w-5 h-5 sm:w-6 sm:h-6" />
-                ) : (
-                  <Menu className="w-5 h-5 sm:w-6 sm:h-6" />
-                )}
-              </button>
             </div>
           </div>
         </div>
@@ -368,71 +453,6 @@ export default function RedditNavbar() {
               isMobile={true}
               onClose={() => setMobileSearchOpen(false)}
             />
-          </div>
-        )}
-
-        {/* Mobile Menu */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden bg-[#1a1a1b] border-t border-[#343536] slide-down">
-            <div className="px-3 sm:px-4 py-3 space-y-2">
-              {isLoggedIn && user ? (
-                <>
-                  <div className="px-4 py-3 border-b border-[#343536]">
-                    <p className="text-white font-semibold">Hi, {user.name}</p>
-                    <p className="text-gray-400 text-sm">{user.gmailId || user.email}</p>
-                  </div>
-
-                  <button
-                    onClick={() => {
-                      setIsCreateModalOpen(true);
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-gray-100 hover:bg-[#3a3a3c] rounded-xl transition-all"
-                  >
-                    <Plus className="w-5 h-5 text-white" />
-                    <span className="text-base font-semibold">Create Post</span>
-                  </button>
-
-                  <button
-                    onClick={() => {
-                      router.push("/profile");
-                      setMobileMenuOpen(false);
-                    }}
-                    className="w-full flex items-center gap-3 px-4 py-2 text-gray-200 hover:bg-[#323234] transition-all"
-                  >
-                    <User className="w-5 h-5" />
-                    <span className="text-sm">Profile</span>
-                  </button>
-
-                  <button className="w-full flex items-center gap-3 px-4 py-2 text-gray-200 hover:bg-[#323234] transition-all">
-                    <Settings className="w-5 h-5" />
-                    <span className="text-sm">Settings</span>
-                  </button>
-
-                  <div className="border-t border-[#343536] my-2"></div>
-
-                  <button
-                    onClick={handleLogout}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-[#323234] rounded-xl transition-all"
-                  >
-                    <LogOut className="w-5 h-5" />
-                    <span className="text-base font-medium">Logout</span>
-                  </button>
-                </>
-              ) : (
-                <>
-                  <button
-                    onClick={handleGoogleLogin}
-                    className="w-full flex items-center gap-3 px-4 py-3 text-gray-200 hover:bg-[#323234] rounded-xl transition-all"
-                  >
-                    <User className="w-5 h-5" />
-                    <span className="text-base font-medium">Log In</span>
-                  </button>
-
-                  <div className="border-t border-[#343536] my-2"></div>
-                </>
-              )}
-            </div>
           </div>
         )}
       </nav>

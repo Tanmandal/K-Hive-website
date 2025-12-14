@@ -1,9 +1,9 @@
-// src/app/layout.js
+// src/app/layout.jsx
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/QueryProvider";
 import { ToastProvider } from "@/components/Toast";
-import RedditNavbar from "./components/Navbar";
+import ClientLayout from "@/components/ClientLayout";
 import ScrollToTop from "@/components/scrollToTop";
 
 const geistSans = Geist({
@@ -29,9 +29,10 @@ export default function RootLayout({ children }) {
       >
         <QueryProvider>
           <ToastProvider>
-            <RedditNavbar />
-            <ScrollToTop />
-            {children}
+            <ClientLayout>
+              <ScrollToTop />
+              {children}
+            </ClientLayout>
           </ToastProvider>
         </QueryProvider>
       </body>

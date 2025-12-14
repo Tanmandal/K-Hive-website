@@ -190,7 +190,7 @@ export default function SearchBar({
           onChange={(e) => setSearchTerm(e.target.value)}
           onFocus={() => setIsFocused(true)}
           onKeyDown={handleKeyDown}
-          placeholder="Search K-Hive"
+          placeholder="Search for posts"
           className="bg-transparent text-gray-300 placeholder-gray-500 outline-none flex-1 text-sm lg:text-base"
         />
 
