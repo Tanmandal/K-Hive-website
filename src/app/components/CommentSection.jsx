@@ -13,6 +13,7 @@ import {
   Check,
 } from "lucide-react";
 import { useComments, useReplies, useCreateComment, useUpdateComment, useDeleteComment } from "@/lib/hooks/useComments";
+import toast from "react-hot-toast";
 
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -45,10 +46,23 @@ function InlineReply({ parentId = null, onCancel, onSubmit, postId }) {
         onSuccess: () => {
           setText("");
           onSubmit?.();
+          toast.success(parentId ? "Reply posted!" : "Comment posted!", {
+            style: {
+              background: "#1a2836",
+              color: "#fff",
+              border: "1px solid #1dddf2",
+            },
+          });
         },
         onError: (error) => {
           console.error("Failed to create comment:", error);
-          alert(error.response?.data?.message || "Failed to post comment");
+          toast.error(error.response?.data?.message || "Failed to post comment", {
+            style: {
+              background: "#1a2836",
+              color: "#fff",
+              border: "1px solid #ff4500",
+            },
+          });
         },
       }
     );
@@ -97,10 +111,28 @@ function EditCommentForm({ comment, onCancel, onSuccess }) {
       {
         onSuccess: () => {
           onSuccess?.();
+          toast.success("Comment updated!", {
+            duration: 2000,
+            position: "top-center",
+            icon: "✏️",
+            style: {
+              background: "#1a2836",
+              color: "#fff",
+              border: "1px solid #1dddf2",
+            },
+          });
         },
         onError: (error) => {
           console.error("Failed to update comment:", error);
-          alert(error.response?.data?.message || "Failed to update comment");
+          toast.error(error.response?.data?.message || "Failed to update comment", {
+            duration: 3000,
+            position: "top-center",
+            style: {
+              background: "#1a2836",
+              color: "#fff",
+              border: "1px solid #ff4500",
+            },
+          });
         },
       }
     );
@@ -157,9 +189,29 @@ function RepliesList({ commentId, postId, router, user }) {
     if (!confirm("Are you sure you want to delete this reply?")) return;
     
     deleteComment(replyId, {
+      onSuccess: () => {
+        toast.success("Reply deleted", {
+          duration: 2000,
+          position: "top-center",
+          icon: "🗑️",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
+      },
       onError: (error) => {
         console.error("Failed to delete reply:", error);
-        alert(error.response?.data?.message || "Failed to delete reply");
+        toast.error(error.response?.data?.message || "Failed to delete reply", {
+          duration: 3000,
+          position: "top-center",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
       },
     });
   };
@@ -279,9 +331,29 @@ function Comment({ comment, postId, router, user }) {
     if (!confirm("Are you sure you want to delete this comment?")) return;
     
     deleteComment(comment.commentId, {
+      onSuccess: () => {
+        toast.success("Comment deleted", {
+          duration: 2000,
+          position: "top-center",
+          icon: "🗑️",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
+      },
       onError: (error) => {
         console.error("Failed to delete comment:", error);
-        alert(error.response?.data?.message || "Failed to delete comment");
+        toast.error(error.response?.data?.message || "Failed to delete comment", {
+          duration: 3000,
+          position: "top-center",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
       },
     });
   };
@@ -451,7 +523,6 @@ export default function CommentsSection({ postId, router, user }) {
         <InlineReply 
           postId={postId} 
           parentId={null}
-          // REMOVED: onSubmit={handleRefresh} - React Query will auto-update
         />
       </div>
 

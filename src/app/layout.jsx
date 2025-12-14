@@ -5,6 +5,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { ToastProvider } from "@/components/Toast";
 import ClientLayout from "@/components/ClientLayout";
 import ScrollToTop from "@/components/scrollToTop";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,12 @@ export default function RootLayout({ children }) {
             <ClientLayout>
               <ScrollToTop />
               {children}
+              <Toaster
+                position="bottom-right"
+                toastOptions={{
+                  duration: 3000,
+                }}
+              />
             </ClientLayout>
           </ToastProvider>
         </QueryProvider>

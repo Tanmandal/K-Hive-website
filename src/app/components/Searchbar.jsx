@@ -180,7 +180,7 @@ export default function SearchBar({
         }`}
       >
         <Search className={`text-gray-400 flex-shrink-0 mr-2 lg:mr-3 ${
-          isMobile ? 'w-5 h-5' : 'w-5 h-5 lg:w-6 lg:h-6'
+          isMobile ? 'w-4 h-4' : 'w-4 h-4 lg:w-5 lg:h-5'
         }`} />
         
         <input

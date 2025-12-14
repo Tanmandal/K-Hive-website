@@ -141,7 +141,7 @@ export default function RedditNavbar({ onMobileSidebarToggle }) {
       `}</style>
 
       <nav className="fixed top-0 left-0 right-0 z-50 bg-[#020d1776] border-b border-[#1dddf2]/20 backdrop-blur-md">
-        <div className="px-3 sm:px-4 py-3 sm:py-4">
+        <div className="px-3 sm:px-4 py-2 sm:py-3">
           <div className="flex items-center justify-between gap-2 sm:gap-4 max-w-[1400px] mx-auto">
             {/* Logo Section */}
             <div className="flex items-center gap-2 sm:gap-3">
@@ -193,10 +193,10 @@ export default function RedditNavbar({ onMobileSidebarToggle }) {
                 <>
                   <button
                     onClick={() => setIsCreateModalOpen(true)}
-                    className="flex items-center gap-2 px-4 xl:px-6 py-2 xl:py-3 text-gray-100 border border-[#1dddf2] neon-border hover:border-[#1dddf2]/30 hover:shadow-[0_0_10px_rgba(29,221,242,0.3)] rounded-full transition-all"
+                    className="flex items-center gap-2 px-3 xl:px-5 py-2 xl:py-3 text-gray-100 border border-[#1dddf2] neon-border hover:border-[#1dddf2]/30 hover:shadow-[0_0_10px_rgba(29,221,242,0.3)] rounded-full transition-all"
                   >
-                    <Plus className="w-5 h-5 xl:w-6 xl:h-6 text-white" />
-                    <span className="text-base xl:text-lg font-semibold tracking-wide whitespace-nowrap">
+                    <Plus className="w-4 h-4 xl:w-5 xl:h-5 text-white" />
+                    <span className="text-base xl:text-md font-semibold tracking-wide whitespace-nowrap">
                       Create
                     </span>
                   </button>

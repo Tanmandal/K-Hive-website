@@ -11,7 +11,7 @@ import {
   LogOut,
   ArrowUp,
   ArrowDown,
-  X
+  X,
 } from "lucide-react";
 import { useAuth, useLogout, useUpdateUser } from "@/lib/hooks/useAuth";
 import { useUserProfile } from "@/lib/hooks/useUsers";
@@ -19,28 +19,30 @@ import { useQuery } from "@tanstack/react-query";
 import { postsApi } from "@/lib/api/posts";
 import { useUserComments } from "@/lib/hooks/useComments";
 import { useParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function ProfilePage() {
   const params = useParams();
   const profileUserId = params?.userId;
-  
+
   const [activeTab, setActiveTab] = useState("posts");
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName] = useState("");
-  
+
   // Current authenticated user
   const { data: authData, isLoading: authLoading } = useAuth();
   const currentUser = authData?.user || null;
-  
+
   // Profile being viewed
-  const { data: profileData, isLoading: profileLoading } = useUserProfile(profileUserId);
+  const { data: profileData, isLoading: profileLoading } =
+    useUserProfile(profileUserId);
   const profileUser = profileData?.user || null;
-  
+
   // Determine which user to display
   const isOwnProfile = !profileUserId || profileUserId === currentUser?.userId;
   const displayUser = isOwnProfile ? currentUser : profileUser;
-  const isLoading = isOwnProfile ? authLoading : (authLoading || profileLoading);
-  
+  const isLoading = isOwnProfile ? authLoading : authLoading || profileLoading;
+
   const { mutate: logout } = useLogout();
   const { mutate: updateUser, isPending: isUpdating } = useUpdateUser();
 
@@ -78,14 +80,60 @@ export default function ProfilePage() {
         {
           onSuccess: () => {
             setShowEditModal(false);
+            toast.success("Profile updated successfully!", {
+              duration: 2000,
+              style: {
+                background: "#1a2836",
+                color: "#fff",
+                border: "1px solid #1dddf2",
+              },
+            });
           },
           onError: (error) => {
             console.error("Update failed:", error);
-            alert("Failed to update profile. Please try again.");
-          }
+            toast.error(
+              error.response?.data?.message ||
+                "Failed to update profile. Please try again.",
+              {
+                duration: 3000,
+                position: "top-center",
+                style: {
+                  background: "#1a2836",
+                  color: "#fff",
+                  border: "1px solid #ff4500",
+                },
+              }
+            );
+          },
         }
       );
     }
+  };
+
+  // Handle logout with toast
+  const handleLogout = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        toast.success("Logged out successfully!", {
+          duration: 2000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
+      },
+      onError: (error) => {
+        toast.error("Failed to logout. Please try again.", {
+          duration: 3000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
+      },
+    });
   };
 
   // Format time ago
@@ -111,12 +159,12 @@ export default function ProfilePage() {
     return count.toString();
   };
 
-  // Calculate total karma 
+  // Calculate total karma
   const calculateKarma = () => {
     const postCount = postsData?.data?.length || 0;
     const commentCount = commentsData?.data?.length || 0;
-    
-    return (postCount * 2) + commentCount;
+
+    return postCount * 2 + commentCount;
   };
 
   if (isLoading) {
@@ -132,10 +180,14 @@ export default function ProfilePage() {
       <div className="min-h-screen bg-[#020d17] flex justify-center items-center">
         <div className="text-center">
           <p className="text-white text-xl mb-4">
-            {profileUserId ? "User not found" : "Please log in to view your profile"}
+            {profileUserId
+              ? "User not found"
+              : "Please log in to view your profile"}
           </p>
           <button
-            onClick={() => window.location.href = profileUserId ? '/' : '/login'}
+            onClick={() =>
+              (window.location.href = profileUserId ? "/" : "/login")
+            }
             className="px-6 py-3 bg-[#1dddf2] text-[#020d17] font-bold rounded-lg hover:bg-[#18b8cc] transition-all"
           >
             {profileUserId ? "Go Home" : "Login"}
@@ -175,7 +227,7 @@ export default function ProfilePage() {
                   placeholder="Enter your username"
                   disabled={isUpdating}
                   onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
+                    if (e.key === "Enter") {
                       e.preventDefault();
                       handleUpdateUser();
                     }
@@ -195,7 +247,11 @@ export default function ProfilePage() {
                 <button
                   type="button"
                   onClick={handleUpdateUser}
-                  disabled={isUpdating || !editName.trim() || editName === currentUser?.name}
+                  disabled={
+                    isUpdating ||
+                    !editName.trim() ||
+                    editName === currentUser?.name
+                  }
                   className="flex-1 px-4 py-3 bg-[#1dddf2] text-[#020d17] rounded-lg hover:bg-[#18b8cc] transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isUpdating ? "Saving..." : "Save Changes"}
@@ -261,15 +317,15 @@ export default function ProfilePage() {
             {/* Action Buttons */}
             {isOwnProfile && (
               <div className="flex gap-2 w-full sm:w-auto">
-                <button 
-                  onClick={handleOpenEdit} 
+                <button
+                  onClick={handleOpenEdit}
                   className="flex-1 sm:flex-none px-4 py-2 bg-[#272729] text-white rounded-lg hover:bg-[#3a3a3c] transition-all flex items-center justify-center gap-2"
                 >
                   <Edit className="w-4 h-4" />
                   <span className="text-sm font-semibold">Edit</span>
                 </button>
                 <button
-                  onClick={() => logout()}
+                  onClick={handleLogout}
                   className="flex-1 sm:flex-none px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />
@@ -327,19 +383,6 @@ export default function ProfilePage() {
               <MessageSquare className="w-4 h-4" />
               <span className="font-semibold">Comments</span>
             </button>
-            {isOwnProfile && (
-              <button
-                onClick={() => setActiveTab("saved")}
-                className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
-                  activeTab === "saved"
-                    ? "bg-[#272729] text-white"
-                    : "text-gray-400 hover:text-white hover:bg-[#1c1c1d]"
-                }`}
-              >
-                <Bookmark className="w-4 h-4" />
-                <span className="font-semibold">Saved</span>
-              </button>
-            )}
           </div>
         </div>
 
@@ -360,7 +403,6 @@ export default function ProfilePage() {
                     >
                       <div className="flex">
                         {/* Vote section */}
-                        
 
                         {/* Content */}
                         <div className="flex-1 p-4">
@@ -380,50 +422,39 @@ export default function ProfilePage() {
                             {post.content}
                           </p>
 
-                  <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-3">
+                            {/* Like */}
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-[#00ff51] hover:bg-[#272729] rounded-lg transition-all">
+                              <ArrowUp className="w-5 h-5" />
+                              <span className="text-sm font-semibold text-white">
+                                {formatVoteCount(post.upvotes)}
+                              </span>
+                            </button>
 
-  {/* Like */}
-  <button className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-[#00ff51] hover:bg-[#272729] rounded-lg transition-all">
-    <ArrowUp className="w-5 h-5" />
-    <span className="text-sm font-semibold text-white">
-      {formatVoteCount(post.upvotes)}
-    </span>
-  </button>
+                            {/* Dislike */}
+                            <button className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-[#ff7171] hover:bg-[#272729] rounded-lg transition-all">
+                              <ArrowDown className="w-5 h-5" />
+                              <span className="text-sm font-semibold text-white">
+                                {formatVoteCount(post.downvotes)}
+                              </span>
+                            </button>
 
-  {/* Dislike */}
-  <button className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-[#ff7171] hover:bg-[#272729] rounded-lg transition-all">
-    <ArrowDown className="w-5 h-5" />
-    <span className="text-sm font-semibold text-white">
-      {formatVoteCount(post.downvotes)}
-    </span>
-  </button>
+                            {/* Comments */}
+                            <button className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-lg transition-all">
+                              <MessageSquare className="w-4 h-4" />
+                              <span className="text-sm font-semibold">
+                                {post.commentIds?.length || 0}
+                              </span>
+                            </button>
 
-  {/* Comments */}
-  <button className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-lg transition-all">
-    <MessageSquare className="w-4 h-4" />
-    <span className="text-sm font-semibold">
-      {post.commentIds?.length || 0}
-    </span>
-  </button>
-
-  {/* Share */}
-  <button className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-lg transition-all">
-    <Share2 className="w-4 h-4" />
-    <span className="text-sm font-semibold hidden sm:inline">
-      Share
-    </span>
-  </button>
-
-  {/* Save */}
-  <button className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-lg transition-all">
-    <Bookmark className="w-4 h-4" />
-    <span className="text-sm font-semibold hidden sm:inline">
-      Save
-    </span>
-  </button>
-
-</div>
-
+                            {/* Share */}
+                            <button className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-lg transition-all">
+                              <Share2 className="w-4 h-4" />
+                              <span className="text-sm font-semibold hidden sm:inline">
+                                Share
+                              </span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -436,10 +467,9 @@ export default function ProfilePage() {
                     No posts yet
                   </h3>
                   <p className="text-gray-400 mb-6">
-                    {isOwnProfile 
+                    {isOwnProfile
                       ? "Start sharing your thoughts with the community!"
-                      : `${displayUser.name} hasn't posted anything yet.`
-                    }
+                      : `${displayUser.name} hasn't posted anything yet.`}
                   </p>
                   {isOwnProfile && (
                     <button className="px-6 py-3 bg-[#1dddf2] text-[#020d17] font-bold rounded-lg hover:bg-[#18b8cc] transition-all">
@@ -471,7 +501,9 @@ export default function ProfilePage() {
                             <ArrowUp className="w-4 h-4" />
                           </button>
                           <span className="text-white font-bold text-xs">
-                            {formatVoteCount(comment.upvotes - comment.downvotes)}
+                            {formatVoteCount(
+                              comment.upvotes - comment.downvotes
+                            )}
                           </span>
                           <button className="text-gray-400 hover:text-[#7193ff] p-1 rounded transition-all">
                             <ArrowDown className="w-4 h-4" />
@@ -522,8 +554,7 @@ export default function ProfilePage() {
                   <p className="text-gray-400">
                     {isOwnProfile
                       ? "Your comments will appear here once you start engaging with posts."
-                      : `${displayUser.name} hasn't commented yet.`
-                    }
+                      : `${displayUser.name} hasn't commented yet.`}
                   </p>
                 </div>
               )}
@@ -536,9 +567,7 @@ export default function ProfilePage() {
               <h3 className="text-xl text-white font-bold mb-2">
                 No saved posts
               </h3>
-              <p className="text-gray-400">
-                Save posts to read them later.
-              </p>
+              <p className="text-gray-400">Save posts to read them later.</p>
             </div>
           )}
         </div>
