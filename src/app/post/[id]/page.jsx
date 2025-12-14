@@ -13,6 +13,8 @@ import {
 import CommentsSection from "@/app/components/CommentSection";
 import { usePost, useVotePost } from "@/lib/hooks/usePosts";
 import { useAuth } from "@/lib/hooks/useAuth";
+import { useState } from "react";
+import toast from "react-hot-toast";
 
 const formatTimeAgo = (dateString) => {
   const date = new Date(dateString);
@@ -40,6 +42,7 @@ export default function PostPage() {
   const router = useRouter();
   const { data: authData } = useAuth();
   const user = authData?.user || null;
+  const [copiedPostId, setCopiedPostId] = useState(null);
 
   // Fetch post data
   const { data: postResponse, isLoading, error } = usePost(id);
@@ -50,10 +53,64 @@ export default function PostPage() {
 
   const handleVote = (voteType) => {
     if (!user) {
+      toast.error("Please login to vote", {
+        duration: 3000,
+        position: "top-center",
+        style: {
+          background: "#1a2836",
+          color: "#fff",
+          border: "1px solid #ff4500",
+        },
+      });
       router.push('/login');
       return;
     }
-    votePost({ postId: post.postId, voteType });
+
+    const currentVote = post?.vote || 0;
+    const isUpvote = voteType === "upvote";
+    const isRemovingVote = (isUpvote && currentVote === 1) || (!isUpvote && currentVote === -1);
+
+    votePost(
+      { postId: post.postId, voteType },
+      {
+        onSuccess: () => {
+          if (isRemovingVote) {
+            // toast.success(`${isUpvote ? "Upvote" : "Downvote"} removed`, {
+            //   duration: 2000,
+            //   position: "top-center",
+            //   icon: isUpvote ? "⬆️" : "⬇️",
+            //   style: {
+            //     background: "#1a2836",
+            //     color: "#fff",
+            //     border: "1px solid #1dddf2",
+            //   },
+            // });
+          } else {
+            // toast.success(`Post ${isUpvote ? "upvoted" : "downvoted"}!`, {
+            //   duration: 2000,
+            //   position: "top-center",
+            //   icon: isUpvote ? "⬆️" : "⬇️",
+            //   style: {
+            //     background: "#1a2836",
+            //     color: "#fff",
+            //     border: `1px solid ${isUpvote ? "#1dddf2" : "#7193ff"}`,
+            //   },
+            // });
+          }
+        },
+        onError: (error) => {
+          toast.error("Failed to vote. Please try again.", {
+            duration: 3000,
+            position: "top-center",
+            style: {
+              background: "#1a2836",
+              color: "#fff",
+              border: "1px solid #ff4500",
+            },
+          });
+        },
+      }
+    );
   };
 
   // Get user's current vote state (-1, 0, 1)
@@ -68,18 +125,52 @@ export default function PostPage() {
           title: 'Check out this post',
           url: postUrl
         });
+        toast.success("Shared successfully!", {
+          duration: 2000,
+          position: "top-center",
+          icon: "🔗",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
       } else {
         await navigator.clipboard.writeText(postUrl);
-        setCopiedPostId(postId);
-        setTimeout(() => setCopiedPostId(null), 2000);
+        toast.success("Link copied to clipboard!", {
+          duration: 2000,
+          position: "top-center",
+          icon: "📋",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
       }
     } catch (error) {
       try {
         await navigator.clipboard.writeText(postUrl);
-        setCopiedPostId(postId);
-        setTimeout(() => setCopiedPostId(null), 2000);
+        toast.success("Link copied to clipboard!", {
+          duration: 2000,
+          position: "top-center",
+          icon: "📋",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
       } catch (err) {
-        console.error('Failed to share:', err);
+        toast.error("Failed to share post", {
+          duration: 3000,
+          position: "top-center",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
       }
     }
   };

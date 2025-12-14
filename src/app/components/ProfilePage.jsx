@@ -19,6 +19,7 @@ import { useQuery } from "@tanstack/react-query";
 import { postsApi } from "@/lib/api/posts";
 import { useUserComments } from "@/lib/hooks/useComments";
 import { useParams } from "next/navigation";
+import toast from "react-hot-toast";
 
 export default function ProfilePage() {
   const params = useParams();
@@ -78,14 +79,61 @@ export default function ProfilePage() {
         {
           onSuccess: () => {
             setShowEditModal(false);
+            toast.success("Profile updated successfully!", {
+              duration: 2000,
+              position: "top-center",
+              icon: "✅",
+              style: {
+                background: "#1a2836",
+                color: "#fff",
+                border: "1px solid #1dddf2",
+              },
+            });
           },
           onError: (error) => {
             console.error("Update failed:", error);
-            alert("Failed to update profile. Please try again.");
+            toast.error(error.response?.data?.message || "Failed to update profile. Please try again.", {
+              duration: 3000,
+              position: "top-center",
+              style: {
+                background: "#1a2836",
+                color: "#fff",
+                border: "1px solid #ff4500",
+              },
+            });
           }
         }
       );
     }
+  };
+
+  // Handle logout with toast
+  const handleLogout = () => {
+    logout(undefined, {
+      onSuccess: () => {
+        toast.success("Logged out successfully!", {
+          duration: 2000,
+          position: "top-center",
+          icon: "👋",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
+      },
+      onError: (error) => {
+        toast.error("Failed to logout. Please try again.", {
+          duration: 3000,
+          position: "top-center",
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
+      }
+    });
   };
 
   // Format time ago
@@ -269,7 +317,7 @@ export default function ProfilePage() {
                   <span className="text-sm font-semibold">Edit</span>
                 </button>
                 <button
-                  onClick={() => logout()}
+                  onClick={handleLogout}
                   className="flex-1 sm:flex-none px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all flex items-center justify-center gap-2"
                 >
                   <LogOut className="w-4 h-4" />

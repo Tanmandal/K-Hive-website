@@ -418,6 +418,7 @@ export default function RedditNavbar() {
                     <LogOut className="w-5 h-5" />
                     <span className="text-base font-medium">Logout</span>
                   </button>
+                  
                 </>
               ) : (
                 <>

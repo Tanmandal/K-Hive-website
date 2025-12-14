@@ -5,6 +5,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import { ToastProvider } from "@/components/Toast";
 import RedditNavbar from "./components/Navbar";
 import ScrollToTop from "@/components/scrollToTop";
+import { Toaster } from "react-hot-toast";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,6 +33,12 @@ export default function RootLayout({ children }) {
             <RedditNavbar />
             <ScrollToTop />
             {children}
+             <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 3000,
+          }}
+        />
           </ToastProvider>
         </QueryProvider>
       </body>
