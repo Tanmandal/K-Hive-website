@@ -2,7 +2,6 @@
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { QueryProvider } from "@/providers/QueryProvider";
-import { ToastProvider } from "@/components/Toast";
 import ClientLayout from "@/components/ClientLayout";
 import ScrollToTop from "@/components/scrollToTop";
 import { Toaster } from "react-hot-toast";
@@ -29,7 +28,6 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
-          <ToastProvider>
             <ClientLayout>
               <ScrollToTop />
               {children}
@@ -40,7 +38,6 @@ export default function RootLayout({ children }) {
                 }}
               />
             </ClientLayout>
-          </ToastProvider>
         </QueryProvider>
       </body>
     </html>

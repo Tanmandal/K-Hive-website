@@ -12,7 +12,7 @@ import { useRouter, usePathname } from "next/navigation";
 import CreatePostModal from "./CreateModal";
 import { useCreatePost } from "@/lib/hooks/usePosts";
 import { mediaApi } from "@/lib/api/media";
-import { useToast } from "@/components/Toast";
+import toast from "react-hot-toast";
 import SearchBar from "../components/Searchbar";
 
 export default function RedditNavbar({ onMobileSidebarToggle }) {
@@ -24,7 +24,6 @@ export default function RedditNavbar({ onMobileSidebarToggle }) {
   const createPostMutation = useCreatePost();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { mutate: logout } = useLogout();
-  const { showToast } = useToast();
 
   const { data, isLoading } = useAuth();
   
@@ -97,12 +96,26 @@ export default function RedditNavbar({ onMobileSidebarToggle }) {
 
       await createPostMutation.mutateAsync(finalPostData);
       setIsCreateModalOpen(false);
-      showToast("Post created successfully! 🎉", "success");
+      toast.success("Post created successfully! 🎉", {
+        duration: 3000,
+        style: {
+          background: "#1a2836",
+          color: "#fff",
+          border: "1px solid #1dddf2",
+        },
+      });
     } catch (err) {
       console.error("Error creating post:", err);
       const errorMessage =
         err.response?.data?.message || err.message || "Failed to create post";
-      showToast(errorMessage, "error");
+      toast.error(errorMessage, {
+        duration: 3000,
+        style: {
+          background: "#1a2836",
+          color: "#fff",
+          border: "1px solid #ff4500",
+        },
+      });
     } finally {
       setIsSubmitting(false);
     }

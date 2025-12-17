@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { X, Image as ImageIcon, Tag, Heart, MessageCircle, Loader2 } from "lucide-react";
+import toast from "react-hot-toast";
 
 export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmitting }) {
   const [formData, setFormData] = useState({
@@ -11,7 +12,6 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmittin
   const [tagInput, setTagInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [imagePreview, setImagePreview] = useState(null);
-  const [error, setError] = useState("");
   const [charCount, setCharCount] = useState(0);
 
   if (!isOpen) return null;
@@ -28,7 +28,6 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmittin
       ...prev,
       [name]: value,
     }));
-    setError("");
   };
 
   // Handle tag addition
@@ -108,12 +107,26 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmittin
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/")) {
-        setError("Please select a valid image file");
+        toast.error("Please select a valid image file", {
+          duration: 3000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
         return;
       }
 
       if (file.size > 10 * 1024 * 1024) {
-        setError("Image size should be less than 10MB");
+        toast.error("Image size should be less than 10MB", {
+          duration: 3000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
         return;
       }
 
@@ -126,10 +139,24 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmittin
           setImagePreview(reader.result);
         };
         reader.readAsDataURL(compressedFile);
-        setError("");
+        toast.success("Image added successfully", {
+          duration: 2000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
       } catch (err) {
         console.error("Error compressing image:", err);
-        setError("Failed to process image");
+        toast.error("Failed to process image", {
+          duration: 3000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
       }
     }
   };
@@ -143,25 +170,52 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmittin
   // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
-    setError("");
 
     if (!formData.title.trim()) {
-      setError("Title is required");
+      toast.error("Title is required", {
+        duration: 3000,
+        style: {
+          background: "#1a2836",
+          color: "#fff",
+          border: "1px solid #ff4500",
+        },
+      });
       return;
     }
 
     if (formData.title.trim().length < 5 || formData.title.trim().length > 200) {
-      setError("Title must be between 5 and 200 characters");
+      toast.error("Title must be between 5 and 200 characters", {
+        duration: 3000,
+        style: {
+          background: "#1a2836",
+          color: "#fff",
+          border: "1px solid #ff4500",
+        },
+      });
       return;
     }
 
     if (!formData.content.trim()) {
-      setError("Content is required");
+      toast.error("Content is required", {
+        duration: 3000,
+        style: {
+          background: "#1a2836",
+          color: "#fff",
+          border: "1px solid #ff4500",
+        },
+      });
       return;
     }
 
     if (formData.content.trim().length < 10) {
-      setError("Content must be at least 10 characters");
+      toast.error("Content must be at least 10 characters", {
+        duration: 3000,
+        style: {
+          background: "#1a2836",
+          color: "#fff",
+          border: "1px solid #ff4500",
+        },
+      });
       return;
     }
 
@@ -179,7 +233,14 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmittin
       setCharCount(0);
       onClose();
     } catch (err) {
-      setError(err.message || "Failed to create post");
+      toast.error(err.message || "Failed to create post", {
+        duration: 3000,
+        style: {
+          background: "#1a2836",
+          color: "#fff",
+          border: "1px solid #ff4500",
+        },
+      });
     }
   };
 
@@ -190,7 +251,6 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmittin
       setImagePreview(null);
       setTagInput("");
       setCharCount(0);
-      setError("");
       onClose();
     }
   };
@@ -213,13 +273,6 @@ export default function CreatePostModal({ isOpen, onClose, onSubmit, isSubmittin
         {/* Content */}
         <div className="overflow-y-auto max-h-[calc(90vh-140px)] p-6">
           <form onSubmit={handleSubmit} className="space-y-4">
-            {/* Error Message */}
-            {error && (
-              <div className="bg-red-500/10 border border-red-500/50 text-red-400 px-4 py-3 rounded-lg text-sm">
-                {error}
-              </div>
-            )}
-
             {/* Title Input */}
             <div>
               <input
