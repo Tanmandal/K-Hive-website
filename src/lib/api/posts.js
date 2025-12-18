@@ -42,7 +42,7 @@ export const postsApi = {
   },
 
   // Update post
-  updatePost: async ({ postId, postData }) => {
+  updatePost: async ({ postId, ...postData }) => {
     const { data } = await apiClient.put(`/post/${postId}`, postData);
     return data;
   },
