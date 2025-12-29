@@ -1,11 +1,12 @@
 "use client";
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { Search, X, TrendingUp, Clock, Sparkles, AlertCircle } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAutocomplete, useSearch, useIsInCooldown } from "@/lib/hooks/useSearch";
 import { useAuth } from "@/lib/hooks/useAuth";
 
-export default function SearchBar({ 
+// Separate component that uses useSearchParams
+function SearchBarContent({ 
   isMobile = false, 
   onClose = () => {},
   className = "" 
@@ -357,5 +358,42 @@ export default function SearchBar({
         </div>
       )}
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function SearchBar({ 
+  isMobile = false, 
+  onClose = () => {},
+  className = "" 
+}) {
+  return (
+    <Suspense
+      fallback={
+        <div className={`relative ${className}`}>
+          <div
+            className={`flex items-center bg-[#0d1d2c] border border-[#343536] rounded-full px-4 ${
+              isMobile ? 'py-2.5' : 'py-2 lg:py-3'
+            }`}
+          >
+            <Search className={`text-gray-400 flex-shrink-0 mr-2 lg:mr-3 ${
+              isMobile ? 'w-4 h-4' : 'w-4 h-4 lg:w-5 lg:h-5'
+            }`} />
+            <input
+              type="text"
+              placeholder="Search for posts"
+              disabled
+              className="bg-transparent text-gray-300 placeholder-gray-500 outline-none flex-1 text-sm lg:text-base"
+            />
+          </div>
+        </div>
+      }
+    >
+      <SearchBarContent 
+        isMobile={isMobile}
+        onClose={onClose}
+        className={className}
+      />
+    </Suspense>
   );
 }

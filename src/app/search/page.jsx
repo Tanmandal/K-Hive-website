@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { useSearch } from "@/lib/hooks/useSearch";
 import {
@@ -23,7 +23,8 @@ import {
 import { useAuth } from "@/lib/hooks/useAuth";
 import { useVotePost } from "@/lib/hooks/usePosts";
 
-export default function SearchResultsPage() {
+// Separate the component that uses useSearchParams
+function SearchResultsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const query = searchParams.get("q") || "";
@@ -544,5 +545,23 @@ export default function SearchResultsPage() {
         }
       `}</style>
     </div>
+  );
+}
+
+// Main component with Suspense boundary
+export default function SearchResultsPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-[#020d17] pt-24 px-4">
+          <div className="max-w-4xl mx-auto text-center py-20">
+            <Loader2 className="w-12 h-12 text-[#1dddf2] animate-spin mx-auto mb-4" />
+            <p className="text-gray-400">Loading search...</p>
+          </div>
+        </div>
+      }
+    >
+      <SearchResultsContent />
+    </Suspense>
   );
 }
