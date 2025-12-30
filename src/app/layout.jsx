@@ -5,6 +5,7 @@ import { QueryProvider } from "@/providers/QueryProvider";
 import ClientLayout from "@/components/ClientLayout";
 import ScrollToTop from "@/components/scrollToTop";
 import { Toaster } from "react-hot-toast";
+import DisableDevtools from "@/components/DisableDevtools";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,6 +29,7 @@ export default function RootLayout({ children }) {
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <QueryProvider>
+           <DisableDevtools />
             <ClientLayout>
               <ScrollToTop />
               {children}
