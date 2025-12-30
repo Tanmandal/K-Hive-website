@@ -312,23 +312,7 @@ export default function Sidebar({ isMobileOpen, onMobileClose, onMobileOpen }) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.05, duration: 0.2 }}
             >
-              <div className="flex items-center gap-2">
-                <motion.div
-                  className="bg-[#37ff0074] rounded-full w-8 h-8 flex items-center justify-center"
-                  whileHover={{ scale: 1.1, rotate: 180 }}
-                  transition={{ duration: 0.3 }}
-                >
-                  <span className="text-white font-bold text-xl">K</span>
-                </motion.div>
-                <motion.span
-                  className="text-white font-semibold text-xl"
-                  initial={{ opacity: 0, x: -5 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: 0.1, duration: 0.15 }}
-                >
-                  K-Hive
-                </motion.span>
-              </div>
+              <img src="/KHive/k-logo2.png" alt="K-Hive" className="h-8 sm:h-10 md:h-12 w-auto object-contain" />
               <motion.button
                 onClick={onMobileClose}
                 className="p-2 text-gray-400 hover:text-white hover:bg-[#1a2f3f] rounded-lg transition-all"
