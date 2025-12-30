@@ -328,7 +328,7 @@ export default function RedditFeed() {
               <div
                 key={post.postId}
                 onClick={() => router.push(`/post/${post.postId}`)}
-                className="bg-[#0d1d2c] border border-[#343536] rounded-md sm:rounded-lg hover:border-[#1dddf2] transition-all duration-300 overflow-hidden relative"
+                className="bg-[#0d1d2c] border border-[#343536] cursor-pointer rounded-md sm:rounded-lg hover:border-[#1dddf2] transition-all duration-300 overflow-hidden relative"
               >
                 {/* Pinned Badge for Announcements */}
                 {activeFilter === "announcements" && (
@@ -438,7 +438,10 @@ export default function RedditFeed() {
 
                     <div className="flex items-center gap-3 sm:gap-4 md:gap-5 mt-2 sm:mt-3 flex-wrap">
                       <button
-                        onClick={() => handleVote(post.postId, "upvote")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleVote(post.postId, "upvote");
+                        }}
                         disabled={votingPosts[post.postId]}
                         className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-all duration-200 active:scale-95 ${
                           post.vote === 1
@@ -477,7 +480,10 @@ export default function RedditFeed() {
                       </button>
 
                       <button
-                        onClick={() => handleVote(post.postId, "downvote")}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleVote(post.postId, "downvote");
+                        }}
                         disabled={votingPosts[post.postId]}
                         className={`flex items-center gap-1.5 px-2 py-1 rounded-md transition-all duration-200 active:scale-95 ${
                           post.vote === -1
