@@ -18,8 +18,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "K-Hive - The KIIT Community Forum",
-  description: "K-Hive is a community forum for KIIT students to discuss various topics related to the KIIT community.",
+  title: "KHive - The KIIT Community Forum",
+  description: "KHive is a community forum for KIIT students to discuss various topics related to the KIIT community.",
 };
 
 export default function RootLayout({ children }) {
