@@ -51,7 +51,6 @@ export default function ProfilePage() {
   // Current authenticated user
   const { data: authData, isLoading: authLoading } = useAuth();
   const currentUser = authData?.user || null;
-  console.log("Current User:", currentUser);
 
   // Profile being viewed
   const { data: profileData, isLoading: profileLoading } =
@@ -106,7 +105,6 @@ export default function ProfilePage() {
       setCommentsPagination(commentsData.pagination);
     }
   }, [commentsData, commentsPage]);
-  console.log("All Comments:", commentsData);
 
   // Reset pagination when user changes
   useEffect(() => {
