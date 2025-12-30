@@ -61,7 +61,6 @@ export default function PostPage() {
           border: "1px solid #ff4500",
         },
       });
-      router.push('/login');
       return;
     }
 
@@ -171,7 +170,7 @@ export default function PostPage() {
     return (
       <div className="bg-[#020d17] min-h-screen flex items-center justify-center">
         <div className="flex flex-col items-center gap-3">
-          <Loader2 className="w-8 h-8 text-[#ff4500] animate-spin" />
+          <Loader2 className="w-8 h-8 text-[#1dddf2] animate-spin" />
           <p className="text-gray-400 text-sm">Loading post...</p>
         </div>
       </div>

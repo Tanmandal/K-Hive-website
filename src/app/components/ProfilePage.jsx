@@ -25,10 +25,12 @@ import { useParams } from "next/navigation";
 import { useUpdatePost, useDeletePost } from "@/lib/hooks/usePosts";
 import toast from "react-hot-toast";
 import EditPostModal from "@/app/components/EditModal";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
   const params = useParams();
   const profileUserId = params?.userId;
+  const router = useRouter();
 
   const [activeTab, setActiveTab] = useState("posts");
   const [showEditModal, setShowEditModal] = useState(false);
@@ -68,10 +70,11 @@ export default function ProfilePage() {
 
   const { data: postsData, isLoading: postsLoading } = useQuery({
     queryKey: ["posts", "user", displayUser?.userId, postsPage],
-    queryFn: () => postsApi.getPostsByUserId(displayUser?.userId, { 
-      page: postsPage, 
-      limit: postsPerPage 
-    }),
+    queryFn: () =>
+      postsApi.getPostsByUserId(displayUser?.userId, {
+        page: postsPage,
+        limit: postsPerPage,
+      }),
     enabled: !!displayUser?.userId,
   });
 
@@ -86,7 +89,7 @@ export default function ProfilePage() {
       if (postsPage === 1) {
         setAllPosts(postsData.data);
       } else {
-        setAllPosts(prev => [...prev, ...postsData.data]);
+        setAllPosts((prev) => [...prev, ...postsData.data]);
       }
       setPostsPagination(postsData.pagination);
     }
@@ -98,11 +101,12 @@ export default function ProfilePage() {
       if (commentsPage === 1) {
         setAllComments(commentsData.data);
       } else {
-        setAllComments(prev => [...prev, ...commentsData.data]);
+        setAllComments((prev) => [...prev, ...commentsData.data]);
       }
       setCommentsPagination(commentsData.pagination);
     }
   }, [commentsData, commentsPage]);
+  console.log("All Comments:", commentsData);
 
   // Reset pagination when user changes
   useEffect(() => {
@@ -120,6 +124,31 @@ export default function ProfilePage() {
       day: "numeric",
       year: "numeric",
     });
+  };
+
+  const handleShare = async (postId) => {
+    const postUrl = `${window.location.origin}/post/${postId}`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "Check out this post",
+          url: postUrl,
+        });
+      } else {
+        await navigator.clipboard.writeText(postUrl);
+        setCopiedPostId(postId);
+        setTimeout(() => setCopiedPostId(null), 2000);
+      }
+    } catch (error) {
+      try {
+        await navigator.clipboard.writeText(postUrl);
+        setCopiedPostId(postId);
+        setTimeout(() => setCopiedPostId(null), 2000);
+      } catch (err) {
+        console.error("Failed to share:", err);
+      }
+    }
   };
 
   const handleOpenEdit = () => {
@@ -249,7 +278,7 @@ export default function ProfilePage() {
         content: data.content,
         tags: data.tags,
         mediaId: [],
-        media: []
+        media: [],
       },
       {
         onSuccess: () => {
@@ -303,29 +332,26 @@ export default function ProfilePage() {
         });
       },
       onError: (error) => {
-        toast.error(
-          error.response?.data?.message || "Failed to delete post",
-          {
-            duration: 3000,
-            style: {
-              background: "#1a2836",
-              color: "#fff",
-              border: "1px solid #ff4500",
-            },
-          }
-        );
+        toast.error(error.response?.data?.message || "Failed to delete post", {
+          duration: 3000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
       },
     });
   };
 
   // Load more posts
   const handleLoadMorePosts = () => {
-    setPostsPage(prev => prev + 1);
+    setPostsPage((prev) => prev + 1);
   };
 
   // Load more comments
   const handleLoadMoreComments = () => {
-    setCommentsPage(prev => prev + 1);
+    setCommentsPage((prev) => prev + 1);
   };
 
   if (isLoading) {
@@ -454,7 +480,8 @@ export default function ProfilePage() {
             </div>
 
             <p className="text-gray-300 mb-6">
-              Are you sure you want to delete "{selectedPost.title}"? This action cannot be undone.
+              Are you sure you want to delete "{selectedPost.title}"? This
+              action cannot be undone.
             </p>
 
             <div className="flex gap-3">
@@ -497,13 +524,13 @@ export default function ProfilePage() {
           alt="Profile banner"
           className="w-full h-full object-cover"
           onError={(e) => {
-            e.target.style.display = 'none';
-            e.target.nextSibling.style.display = 'block';
+            e.target.style.display = "none";
+            e.target.nextSibling.style.display = "block";
           }}
         />
-        <div 
+        <div
           className="absolute inset-0 bg-gradient-to-r from-[#0d1d2c] via-[#1a3a4a] to-[#0d1d2c]"
-          style={{ display: 'none' }}
+          style={{ display: "none" }}
         >
           <div className="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZGVmcz48cGF0dGVybiBpZD0iZ3JpZCIgd2lkdGg9IjQwIiBoZWlnaHQ9IjQwIiBwYXR0ZXJuVW5pdHM9InVzZXJTcGFjZU9uVXNlIj48cGF0aCBkPSJNIDQwIDAgTCAwIDAgMCA0MCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSJyZ2JhKDI5LCAyMjEsIDI0MiwgMC4xKSIgc3Ryb2tlLXdpZHRoPSIxIi8+PC9wYXR0ZXJuPjwvZGVmcz48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSJ1cmwoI2dyaWQpIi8+PC9zdmc+')] opacity-20"></div>
         </div>
@@ -608,8 +635,8 @@ export default function ProfilePage() {
               onClick={() => setActiveTab("posts")}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
                 activeTab === "posts"
-                  ? "bg-[#272729] text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#1c1c1d]"
+                  ? "bg-[#1dddf2] text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#1c1c1d59]"
               }`}
             >
               <FileText className="w-4 h-4" />
@@ -619,8 +646,8 @@ export default function ProfilePage() {
               onClick={() => setActiveTab("comments")}
               className={`flex items-center gap-2 px-4 py-2 rounded-lg transition-all whitespace-nowrap ${
                 activeTab === "comments"
-                  ? "bg-[#272729] text-white"
-                  : "text-gray-400 hover:text-white hover:bg-[#1c1c1d]"
+                  ? "bg-[#1dddf2] text-white"
+                  : "text-gray-400 hover:text-white hover:bg-[#1c1c1d59]"
               }`}
             >
               <MessageSquare className="w-4 h-4" />
@@ -647,11 +674,14 @@ export default function ProfilePage() {
                       >
                         <div className="flex">
                           {/* Content */}
-                          <div className="flex-1 p-4">
+                          <div
+                            onClick={() => router.push(`/post/${post.postId}`)}
+                            className="flex-1 p-4"
+                          >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2 text-xs text-gray-400">
                                 <span className="font-semibold">
-                                  r/{post.tags?.[0] || "general"}
+                                  u/{post.user?.name || "Unknown"}
                                 </span>
                                 <span>•</span>
                                 <span>{formatTimeAgo(post.createdAt)}</span>
@@ -675,14 +705,20 @@ export default function ProfilePage() {
                                         className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-[#272729] transition-all"
                                       >
                                         <Edit className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Edit Post</span>
+                                        <span className="text-sm font-medium">
+                                          Edit Post
+                                        </span>
                                       </button>
                                       <button
-                                        onClick={() => handleOpenDeleteConfirm(post)}
+                                        onClick={() =>
+                                          handleOpenDeleteConfirm(post)
+                                        }
                                         className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-[#272729] transition-all"
                                       >
                                         <Trash2 className="w-4 h-4" />
-                                        <span className="text-sm font-medium">Delete Post</span>
+                                        <span className="text-sm font-medium">
+                                          Delete Post
+                                        </span>
                                       </button>
                                     </div>
                                   )}
@@ -690,43 +726,51 @@ export default function ProfilePage() {
                               )}
                             </div>
 
-                            <h2 className="text-white text-lg font-bold mb-2 hover:text-[#ff4500] cursor-pointer transition-colors">
+                            <h2
+                              onClick={() =>
+                                router.push(`/post/${post.postId}`)
+                              }
+                              className="text-white text-lg font-bold mb-2 hover:text-[#1dddf2] cursor-pointer transition-colors"
+                            >
                               {post.title}
                             </h2>
 
                             <p className="text-gray-400 text-sm mb-3 line-clamp-2">
                               {post.content}
                             </p>
-
-                            <div className="flex items-center gap-3">
-                              {/* Like */}
-                              <button className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-[#00ff51] hover:bg-[#272729] rounded-lg transition-all">
-                                <ArrowUp className="w-5 h-5" />
-                                <span className="text-sm font-semibold text-white">
+                            <div className="flex items-center gap-3 sm:gap-4 md:gap-5 mt-2 sm:mt-3 flex-wrap">
+                              {/* Vote counts - Display only, no hover/click */}
+                              <div className="flex items-center gap-1.5 px-2 py-1 text-gray-400">
+                                <ArrowUp className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="text-xs sm:text-sm font-semibold">
                                   {formatVoteCount(post.upvotes)}
                                 </span>
-                              </button>
+                              </div>
 
-                              {/* Dislike */}
-                              <button className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:text-[#ff7171] hover:bg-[#272729] rounded-lg transition-all">
-                                <ArrowDown className="w-5 h-5" />
-                                <span className="text-sm font-semibold text-white">
+                              <div className="flex items-center gap-1.5 px-2 py-1 text-gray-400">
+                                <ArrowDown className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="text-xs sm:text-sm font-semibold">
                                   {formatVoteCount(post.downvotes)}
                                 </span>
-                              </button>
+                              </div>
 
-                              {/* Comments */}
-                              <button className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-lg transition-all">
-                                <MessageSquare className="w-4 h-4" />
-                                <span className="text-sm font-semibold">
-                                  {post.commentIds?.length || 0}
+                              {/* Comment count - Display only */}
+                              <div className="flex items-center gap-1.5 px-2 py-1 text-gray-400">
+                                <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
+                                <span className="text-[10px] sm:text-xs md:text-sm font-semibold">
+                                  {post.commentCount ||
+                                    post.commentIds?.length ||
+                                    0}
                                 </span>
-                              </button>
+                              </div>
 
-                              {/* Share */}
-                              <button className="flex items-center gap-2 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-lg transition-all">
-                                <Share2 className="w-4 h-4" />
-                                <span className="text-sm font-semibold hidden sm:inline">
+                              {/* Share button - Only interactive button */}
+                              <button
+                                onClick={() => handleShare(post.postId)}
+                                className="flex items-center gap-1.5 px-2 py-1 text-gray-400 hover:bg-[#272729] rounded-md transition-all duration-300 active:scale-95"
+                              >
+                                <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
+                                <span className="text-xs sm:text-sm font-semibold hidden md:inline">
                                   Share
                                 </span>
                               </button>
@@ -738,24 +782,25 @@ export default function ProfilePage() {
                   </div>
 
                   {/* Show More Button for Posts */}
-                  {postsPagination && postsPagination.page < postsPagination.totalPages && (
-                    <div className="mt-6 text-center">
-                      <button
-                        onClick={handleLoadMorePosts}
-                        disabled={postsLoading}
-                        className="px-6 py-3 bg-[#272729] text-white rounded-lg hover:bg-[#3a3a3c] transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
-                      >
-                        {postsLoading ? (
-                          <>
-                            <Loader2 className="animate-spin w-5 h-5" />
-                            Loading...
-                          </>
-                        ) : (
-                          `Show More Posts (${postsPagination.page} of ${postsPagination.totalPages})`
-                        )}
-                      </button>
-                    </div>
-                  )}
+                  {postsPagination &&
+                    postsPagination.page < postsPagination.totalPages && (
+                      <div className="mt-6 text-center">
+                        <button
+                          onClick={handleLoadMorePosts}
+                          disabled={postsLoading}
+                          className="px-6 py-3 bg-[#272729] text-white rounded-lg hover:bg-[#3a3a3c] transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
+                        >
+                          {postsLoading ? (
+                            <>
+                              <Loader2 className="animate-spin w-5 h-5" />
+                              Loading...
+                            </>
+                          ) : (
+                            `Show More Posts (${postsPagination.page} of ${postsPagination.totalPages})`
+                          )}
+                        </button>
+                      </div>
+                    )}
                 </>
               ) : (
                 <div className="bg-[#0d1d2c] border border-[#343536] rounded-lg p-12 text-center">
@@ -768,11 +813,6 @@ export default function ProfilePage() {
                       ? "Start sharing your thoughts with the community!"
                       : `${displayUser.name} hasn't posted anything yet.`}
                   </p>
-                  {isOwnProfile && (
-                    <button className="px-6 py-3 bg-[#1dddf2] text-[#020d17] font-bold rounded-lg hover:bg-[#18b8cc] transition-all">
-                      Create Post
-                    </button>
-                  )}
                 </div>
               )}
             </>
@@ -792,77 +832,70 @@ export default function ProfilePage() {
                         key={comment.commentId}
                         className="bg-[#0d1d2c] border border-[#343536] rounded-lg hover:border-[#1dddf2] transition-all duration-300 p-4"
                       >
-                        <div className="flex gap-3">
-                          {/* Vote section */}
-                          <div className="flex flex-col items-center gap-1">
-                            <button className="text-gray-400 hover:text-[#ff4500] p-1 rounded transition-all">
-                              <ArrowUp className="w-4 h-4" />
-                            </button>
-                            <span className="text-white font-bold text-xs">
-                              {formatVoteCount(
-                                comment.upvotes - comment.downvotes
-                              )}
-                            </span>
-                            <button className="text-gray-400 hover:text-[#7193ff] p-1 rounded transition-all">
-                              <ArrowDown className="w-4 h-4" />
-                            </button>
-                          </div>
-
-                          {/* Comment Content */}
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-2 text-xs text-gray-400">
-                              <span className="font-semibold text-white">
-                                {displayUser.name}
-                              </span>
+                        <div className="flex items-center gap-2 mb-2 text-xs text-gray-400 ml-2">
+                          <span className="font-semibold text-white">
+                            {displayUser.name}
+                          </span>
+                          <span>•</span>
+                          <span>{formatTimeAgo(comment.createdAt)}</span>
+                          {comment.isEdited && (
+                            <>
                               <span>•</span>
-                              <span>{formatTimeAgo(comment.createdAt)}</span>
-                              {comment.isEdited && (
-                                <>
-                                  <span>•</span>
-                                  <span className="italic">edited</span>
-                                </>
-                              )}
-                            </div>
+                              <span className="italic">edited</span>
+                            </>
+                          )}
+                        </div>
 
-                            <p className="text-gray-300 text-sm mb-3 whitespace-pre-wrap">
-                              {comment.content}
-                            </p>
+                        <p className="text-gray-300 text-sm mb-3 whitespace-pre-wrap ml-2">
+                          {comment.content}
+                        </p>
 
-                            <div className="flex items-center gap-2">
-                              <button className="flex items-center gap-1 px-2 py-1 text-gray-400 hover:bg-[#272729] rounded text-xs transition-all">
-                                <MessageSquare className="w-3 h-3" />
-                                <span>Reply</span>
-                              </button>
-                              <button className="flex items-center gap-1 px-2 py-1 text-gray-400 hover:bg-[#272729] rounded text-xs transition-all">
-                                <Share2 className="w-3 h-3" />
-                                <span>Share</span>
-                              </button>
-                            </div>
-                          </div>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              router.push(`/post/${comment.postId}`)
+                            }
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-md transition-all duration-300 active:scale-95"
+                          >
+                            <span className="text-xs sm:text-sm font-semibold">
+                              View Post
+                            </span>
+                          </button>
+
+                          <button
+                            onClick={() => handleShare(comment.postId)}
+                            className="flex items-center gap-1.5 px-3 py-1.5 text-gray-400 hover:bg-[#272729] rounded-md transition-all duration-300 active:scale-95"
+                          >
+                            <Share2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                            <span className="text-xs sm:text-sm font-semibold">
+                              Share
+                            </span>
+                          </button>
                         </div>
                       </div>
                     ))}
                   </div>
 
                   {/* Show More Button for Comments */}
-                  {commentsPagination && commentsPagination.page < commentsPagination.totalPages && (
-                    <div className="mt-6 text-center">
-                      <button
-                        onClick={handleLoadMoreComments}
-                        disabled={commentsLoading}
-                        className="px-6 py-3 bg-[#272729] text-white rounded-lg hover:bg-[#3a3a3c] transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
-                      >
-                        {commentsLoading ? (
-                          <>
-                            <Loader2 className="animate-spin w-5 h-5" />
-                            Loading...
-                          </>
-                        ) : (
-                          `Show More Comments (${commentsPagination.page} of ${commentsPagination.totalPages})`
-                        )}
-                      </button>
-                    </div>
-                  )}
+                  {commentsPagination &&
+                    commentsPagination.page < commentsPagination.totalPages && (
+                      <div className="mt-6 text-center">
+                        <button
+                          onClick={handleLoadMoreComments}
+                          disabled={commentsLoading}
+                          className="px-6 py-3 bg-[#272729] text-white rounded-lg hover:bg-[#3a3a3c] transition-all font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 mx-auto"
+                        >
+                          {commentsLoading ? (
+                            <>
+                              <Loader2 className="animate-spin w-5 h-5" />
+                              Loading...
+                            </>
+                          ) : (
+                            `Show More Comments (${commentsPagination.page} of ${commentsPagination.totalPages})`
+                          )}
+                        </button>
+                      </div>
+                    )}
                 </>
               ) : (
                 <div className="bg-[#0d1d2c] border border-[#343536] rounded-lg p-12 text-center">
