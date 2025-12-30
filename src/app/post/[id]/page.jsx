@@ -97,7 +97,7 @@ export default function PostPage() {
           }
         },
         onError: (error) => {
-          toast.error("Failed to vote. Please try again.", {
+          toast.error(error.response?.data?.message || "Failed to vote. Please try again.", {
             duration: 3000,
             style: {
               background: "#1a2836",
