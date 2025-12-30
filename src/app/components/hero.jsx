@@ -343,9 +343,7 @@ export default function RedditFeed() {
 
                 <div className="flex">
                   <div className="flex-1 p-1.5 sm:p-2 md:p-3 lg:p-4 min-w-0">
-                    <div
-                      className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2 text-[10px] sm:text-xs md:text-sm text-gray-400 flex-wrap"
-                    >
+                    <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2 mb-1 sm:mb-1.5 md:mb-2 text-[10px] sm:text-xs md:text-sm text-gray-400 flex-wrap">
                       {activeFilter === "announcements" && (
                         <>
                           <span className="px-2 py-0.5 bg-[#1dddf2]/10 text-[#1dddf2] rounded font-semibold">
@@ -521,13 +519,14 @@ export default function RedditFeed() {
                       </button>
 
                       <button
-                        onClick={() =>
+                        onClick={(e) => {
+                          e.stopPropagation();
                           setShowCommentInput(
                             showCommentInput === post.postId
                               ? null
                               : post.postId
-                          )
-                        }
+                          );
+                        }}
                         className="flex items-center gap-1.5 px-2 py-1 text-gray-400 hover:bg-[#272729] rounded-md transition-all duration-300 active:scale-95"
                       >
                         <MessageSquare className="w-3.5 h-3.5 sm:w-4 sm:h-4 md:w-5 md:h-5" />
@@ -537,7 +536,10 @@ export default function RedditFeed() {
                       </button>
 
                       <button
-                        onClick={() => handleShare(post.postId)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleShare(post.postId);
+                        }}
                         className="flex items-center gap-1.5 px-2 py-1 text-gray-400 hover:bg-[#272729] rounded-md transition-all duration-300 active:scale-95"
                       >
                         {copiedPostId === post.postId ? (
@@ -562,16 +564,11 @@ export default function RedditFeed() {
                       <div className="mt-2 sm:mt-3 relative">
                         <input
                           type="text"
+                          onClick={(e) => e.stopPropagation()}
                           placeholder="Write a comment..."
                           className="w-full px-2 sm:px-3 py-1.5 sm:py-2 pr-10 rounded sm:rounded-md md:rounded-lg bg-[#1a1a1b] border border-gray-700 text-gray-200 placeholder:text-gray-500 focus:outline-none focus:ring-1 sm:focus:ring-2 focus:ring-blue-500 transition-all duration-300 text-xs sm:text-sm"
                           value={text}
                           onChange={(e) => setText(e.target.value)}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter" && text.trim() && user) {
-                              e.preventDefault();
-                              handleSubmit(text, post.postId, null);
-                            }
-                          }}
                           autoFocus
                         />
 
