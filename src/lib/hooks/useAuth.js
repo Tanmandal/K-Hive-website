@@ -34,6 +34,30 @@ export const useUpdateUser = () => {
   });
 };
 
+export const useDeleteUser = () => {
+  const queryClient = useQueryClient();
+  const router = useRouter();
+
+  return useMutation({
+    mutationFn: authApi.deleteUser,
+    onSuccess: () => {
+      // Clear all cached data
+      queryClient.clear();
+      
+      // Remove access token
+      localStorage.removeItem('accessToken');
+      
+      // Small delay to ensure cookies are cleared
+      setTimeout(() => {
+        router.push('/');
+      }, 100);
+    },
+    onError: (error) => {
+      console.error('Delete user error:', error);
+    }
+  });
+};
+
 export const useLogout = () => {
   const queryClient = useQueryClient();
   const router = useRouter();

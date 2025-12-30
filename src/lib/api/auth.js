@@ -19,6 +19,12 @@ export const authApi = {
     return data;
   },
 
+  // Delete user
+  deleteUser: async () => {
+    const { data } = await apiClient.delete('/auth/user');
+    return data;
+  },
+
   // Logout user
   logout: async () => {
     const { data } = await apiClient.post('/auth/logout');

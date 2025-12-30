@@ -15,8 +15,9 @@ import {
   RefreshCw,
   Eye
 } from "lucide-react";
-import { useAuth, useLogout } from "@/lib/hooks/useAuth";
+import { useAuth, useLogout, useDeleteUser } from "@/lib/hooks/useAuth";
 import { useRouter } from "next/navigation";
+import { authApi } from "@/lib/api/auth";
 import toast from "react-hot-toast";
 
 export default function SettingsPage() {
@@ -29,6 +30,7 @@ export default function SettingsPage() {
   const user = authData?.user || null;
   const isLoggedIn = !!user;
   const { mutate: logout } = useLogout();
+  const { mutate: deleteUser } = useDeleteUser();
 
   // Redirect to home if not authenticated
   useEffect(() => {
@@ -49,7 +51,8 @@ export default function SettingsPage() {
             border: "1px solid #1dddf2",
           },
         });
-        router.push("/");
+        // Open Google account selection page
+        authApi.loginWithGoogle();
       },
       onError: (error) => {
         toast.error("Failed to logout. Please try again.", {
@@ -68,22 +71,34 @@ export default function SettingsPage() {
     if (deleteConfirmText !== "DELETE") return;
     
     setIsDeleting(true);
-    try {
-      // Add your delete account API call here
-      // await deleteAccountApi();
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      toast.success("Account deleted successfully");
-      router.push("/");
-    } catch (error) {
-      toast.error("Failed to delete account. Please try again.");
-      console.error("Failed to delete account:", error);
-    } finally {
-      setIsDeleting(false);
-      setShowDeleteModal(false);
-    }
+    
+    deleteUser(undefined, {
+      onSuccess: () => {
+        toast.success("Account deleted successfully", {
+          duration: 3000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #1dddf2",
+          },
+        });
+        setShowDeleteModal(false);
+        setDeleteConfirmText("");
+        router.push("/");
+      },
+      onError: (error) => {
+        console.error("Failed to delete account:", error);
+        toast.error(error.response?.data?.message || "Failed to delete account. Please try again.", {
+          duration: 3000,
+          style: {
+            background: "#1a2836",
+            color: "#fff",
+            border: "1px solid #ff4500",
+          },
+        });
+        setIsDeleting(false);
+      },
+    });
   };
 
   const handleToggleEmailPrivacy = () => {
