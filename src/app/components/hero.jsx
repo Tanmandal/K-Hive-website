@@ -76,7 +76,6 @@ export default function RedditFeed() {
           border: "1px solid #ff4500",
         },
       });
-      router.push("/login");
       return;
     }
 
