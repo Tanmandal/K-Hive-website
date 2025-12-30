@@ -238,10 +238,25 @@ export default function RedditFeed() {
         onSuccess: () => {
           setText("");
           setShowCommentInput(null);
+          toast.success("Comment posted successfully!", {
+            duration: 3000,
+            style: {
+              background: "#1a2836",
+              color: "#fff",
+              border: "1px solid #1dddf2",
+            },
+          });
         },
         onError: (error) => {
           console.error("Failed to create comment:", error);
-          alert(error.response?.data?.message || "Failed to post comment");
+          toast.error(error.response?.data?.message || "Failed to post comment", {
+            duration: 3000,
+            style: {
+              background: "#1a2836",
+              color: "#fff",
+              border: "1px solid #ff4500",
+            },
+          });
         },
       }
     );
@@ -383,13 +398,14 @@ export default function RedditFeed() {
                       {post.media && post.media.length > 0 && (
                         <div
                           className="w-full h-52 md:w-[45%] md:h-36 lg:h-40 xl:h-44 flex-shrink-0 rounded-md sm:rounded-lg overflow-hidden cursor-pointer"
-                          onClick={() =>
+                          onClick={(e) => {
+                            e.stopPropagation();
                             setShowCommentInput(
                               showCommentInput === `img-${post.postId}`
                                 ? null
                                 : `img-${post.postId}`
-                            )
-                          }
+                            );
+                          }}
                         >
                           <img
                             src={post.media[0]}
@@ -422,7 +438,10 @@ export default function RedditFeed() {
                       showCommentInput === `img-${post.postId}` && (
                         <div
                           className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
-                          onClick={() => setShowCommentInput(null)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setShowCommentInput(null);
+                          }}
                         >
                           <img
                             src={post.media[0]}
@@ -573,7 +592,10 @@ export default function RedditFeed() {
                         />
 
                         <button
-                          onClick={() => handleSubmit(text, post.postId, null)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSubmit(text, post.postId, null);
+                          }}
                           disabled={!text.trim() || !user}
                           className={`absolute right-2 top-1/2 -translate-y-1/2 cursor-pointer p-1 rounded transition-all ${
                             text.trim() && user
