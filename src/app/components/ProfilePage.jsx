@@ -124,7 +124,8 @@ export default function ProfilePage() {
     });
   };
 
-  const handleShare = async (postId) => {
+  const handleShare = async (postId,e) => {
+      e.stopPropagation(); 
     const postUrl = `${window.location.origin}/post/${postId}`;
 
     try {
@@ -249,19 +250,22 @@ export default function ProfilePage() {
   };
 
   // Toggle post menu
-  const togglePostMenu = (postId) => {
+  const togglePostMenu = (postId,e) => {
+      e.stopPropagation(); 
     setOpenMenuPostId(openMenuPostId === postId ? null : postId);
   };
 
   // Open post edit modal
-  const handleOpenPostEdit = (post) => {
+  const handleOpenPostEdit = (post,e) => {
+      e.stopPropagation(); 
     setSelectedPost(post);
     setOpenMenuPostId(null);
     setShowPostEditModal(true);
   };
 
   // Open delete confirmation
-  const handleOpenDeleteConfirm = (post) => {
+  const handleOpenDeleteConfirm = (post,e) => {
+      e.stopPropagation(); 
     setSelectedPost(post);
     setOpenMenuPostId(null);
     setShowDeleteConfirm(true);
@@ -674,7 +678,7 @@ export default function ProfilePage() {
                           {/* Content */}
                           <div
                             onClick={() => router.push(`/post/${post.postId}`)}
-                            className="flex-1 p-4"
+                            className="flex-1 p-4 cursor-pointer"
                           >
                             <div className="flex items-center justify-between mb-2">
                               <div className="flex items-center gap-2 text-xs text-gray-400">
@@ -689,7 +693,7 @@ export default function ProfilePage() {
                               {isOwnProfile && (
                                 <div className="relative">
                                   <button
-                                    onClick={() => togglePostMenu(post.postId)}
+                                    onClick={(e) => togglePostMenu(post.postId, e)}
                                     className="p-1.5 text-gray-400 hover:text-white hover:bg-[#272729] rounded-lg transition-all"
                                   >
                                     <MoreVertical className="w-5 h-5" />
@@ -699,7 +703,7 @@ export default function ProfilePage() {
                                   {openMenuPostId === post.postId && (
                                     <div className="absolute right-0 mt-2 w-48 bg-[#1a1a1b] border border-[#343536] rounded-lg shadow-xl z-20">
                                       <button
-                                        onClick={() => handleOpenPostEdit(post)}
+                                        onClick={(e) => handleOpenPostEdit(post, e)}
                                         className="w-full flex items-center gap-3 px-4 py-3 text-left text-white hover:bg-[#272729] transition-all"
                                       >
                                         <Edit className="w-4 h-4" />
@@ -708,8 +712,8 @@ export default function ProfilePage() {
                                         </span>
                                       </button>
                                       <button
-                                        onClick={() =>
-                                          handleOpenDeleteConfirm(post)
+                                        onClick={(e) =>
+                                          handleOpenDeleteConfirm(post, e)
                                         }
                                         className="w-full flex items-center gap-3 px-4 py-3 text-left text-red-400 hover:bg-[#272729] transition-all"
                                       >
@@ -764,7 +768,7 @@ export default function ProfilePage() {
 
                               {/* Share button - Only interactive button */}
                               <button
-                                onClick={() => handleShare(post.postId)}
+                               onClick={(e) => handleShare(post.postId, e)}
                                 className="flex items-center gap-1.5 px-2 py-1 text-gray-400 hover:bg-[#272729] rounded-md transition-all duration-300 active:scale-95"
                               >
                                 <Share2 className="w-4 h-4 sm:w-5 sm:h-5" />
